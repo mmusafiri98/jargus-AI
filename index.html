@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jargus AI virtual assistant </title>
+    <title>Jargus AI virtual assistant</title>
 
     <!---- CSS Linkage ------>
 
@@ -51,12 +51,6 @@
             text-align: center;
             margin-bottom: 10px;
             font-size: 40px;
-        }
-
-        .main .image-container p {
-            color: #324042;
-            text-align: center;
-            margin-bottom: 40px;
         }
 
         .main .input {
@@ -121,6 +115,14 @@
             color: #aed0d0;
             margin-top: 20px;
         }
+
+        .thinking {
+            color: #00bcd4;
+            font-weight: bold;
+            margin-top: 20px;
+            display: none;
+            /* Initially hidden */
+        }
     </style>
 
     <!---- Font Awesome Cdn Linkage ------>
@@ -135,18 +137,18 @@
             <div class="image">
                 <img src="gif.gif" alt="image">
             </div>
-            <h1>Jargus AI </h1>
-
+            <h1>Jargus AI</h1>
         </div>
         <div class="input">
             <button class="talk"><i class="fas fa-microphone-alt"></i></button>
-            <h1 class="content"> Click here to speak</h1>
+            <h1 class="content">Click here to speak</h1>
         </div>
 
         <!-- Dialogue Form -->
         <div class="dialogue-form">
             <input type="text" id="user-input" placeholder="Type your message here..." />
             <button id="submit-btn">Send</button>
+            <div class="thinking" id="thinking">Jargus is thinking...</div> <!-- Thinking message -->
             <div class="dialogue-response" id="response"></div>
         </div>
     </section>
@@ -159,6 +161,7 @@
         const userInput = document.getElementById('user-input');
         const submitBtn = document.getElementById('submit-btn');
         const responseDiv = document.getElementById('response');
+        const thinkingDiv = document.getElementById('thinking'); // Thinking message element
 
         const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée,"; // Adjust as needed
 
@@ -185,7 +188,7 @@
         }
 
         window.addEventListener('load', () => {
-            speak("Activating Inertia");
+            speak("Activating Jargus AI");
             speak("Going online");
             wishMe();
         });
@@ -208,8 +211,12 @@
         submitBtn.addEventListener('click', async () => {
             const userInputText = userInput.value;
             if (userInputText) {
+                thinkingDiv.style.display = 'block'; // Show thinking message
+                responseDiv.textContent = ''; // Clear previous response
+
                 // Send to Cosmirop API
                 const response = await sendToCosmirop(userInputText);
+                thinkingDiv.style.display = 'none'; // Hide thinking message
                 responseDiv.textContent = response; // Display the response
                 speak(response); // Speak the response
                 userInput.value = ''; // Clear the input
@@ -249,30 +256,23 @@
             speech.text = "I did not understand what you said, please try again.";
 
             if (message.includes('hey') || message.includes('hello')) {
-                const finalText = "Hello Boss";
-                speech.text = finalText;
+                speech.text = "Hello Boss";
             } else if (message.includes('how are you')) {
-                const finalText = "I am fine boss tell me how can I help you";
-                speech.text = finalText;
+                speech.text = "I am fine boss tell me how can I help you";
             } else if (message.includes('name')) {
-                const finalText = "My name is Inertia";
-                speech.text = finalText;
+                speech.text = "My name is Jargus AI";
             } else if (message.includes('open google')) {
                 window.open("https://google.com", "_blank");
-                const finalText = "Opening Google";
-                speech.text = finalText;
+                speech.text = "Opening Google";
             } else if (message.includes('open instagram')) {
                 window.open("https://instagram.com", "_blank");
-                const finalText = "Opening Instagram";
-                speech.text = finalText;
+                speech.text = "Opening Instagram";
             } else if (message.includes('open amazon')) {
                 window.open("https://amazon.com", "_blank");
-                const finalText = "Opening Amazon";
-                speech.text = finalText;
+                speech.text = "Opening Amazon";
             } else {
                 window.open(`https://www.google.com/search?q=${message.replace(" ", "+")}`, "_blank");
-                const finalText = "I found some information for " + message + " on google";
-                speech.text = finalText;
+                speech.text = "I found some information for " + message + " on Google";
             }
 
             speech.volume = 1;
