@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI Virtual Assistant</title>
+
+    <!-- CSS Styling -->
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700&display=swap");
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Roboto Mono", monospace;
+        }
+
+        .main {
+            min-height: 100vh;
+            position: relative;
+            width: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main .image-container {
+            padding: 10px;
+        }
+
+        .main .image-container .image img {
+            width: 170px;
+            align-items: center;
+        }
+
+        .main .image-container h1 {
+            color: #00bcd4;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 40px;
+        }
+
+        .main .input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40vw;
+            height: 50px;
+            border-radius: 20px;
+            background: rgb(202 253 255 / 50%);
+        }
+
+        .main .input .talk {
+            background: transparent;
+            outline: none;
+            border: none;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .main .input .content {
+            color: #aed0d0;
+            font-size: 15px;
+            margin-right: 20px;
+        }
+
+        .messages {
+            margin-top: 20px;
+            color: #aed0d0;
+            max-width: 50vw;
+            padding: 10px;
+        }
+
+        .messages .user,
+        .messages .bot {
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        .messages .user {
+            color: #00bcd4;
+        }
+
+        .messages .bot {
+            color: #aed0d0;
+        }
+    </style>
+
+    <!-- Font Awesome & ResponsiveVoice -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
+</head>
+
+<body>
+    <section class="main">
+        <div class="image-container">
+            <div class="image">
+                <img src="gif.gif" alt="image">
+            </div>
+            <h1>Jarvis AI</h1>
+            <p>I'm a Virtual Assistant, how can I help you?</p>
+        </div>
+        <div class="input">
+            <button class="talk"><i class="fas fa-microphone-alt"></i></button>
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <select id="model-select">
+                <option value="cosmic">Cosmic Model</option>
+                <option value="default">Default Model</option>
+                <option value="advanced">Advanced Model</option>
+            </select>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <div class="messages" id="chatbox"></div>
+    </section>
+
+    <!-- JavaScript to handle voice recognition and AI response -->
+    <script>
+        const btn = document.querySelector('.talk');
+        const chatbox = document.getElementById('chatbox');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        // Fonction pour afficher les messages
+        function displayMessage(text, sender) {
+            const messageElem = document.createElement('div');
+            messageElem.className = sender;
+            messageElem.textContent = text;
+            chatbox.appendChild(messageElem);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        // Fonction pour afficher l'indicateur de "réflexion"
+        function showThinkingAnimation() {
+            const indicator = document.createElement('div');
+            indicator.className = 'bot';
+            indicator.textContent = 'Jarvis is thinking...';
+            chatbox.appendChild(indicator);
+            chatbox.scrollTop = chatbox.scrollHeight;
+            return indicator;
+        }
+
+        // Fonction pour supprimer l'indicateur
+        function removeMessage(element) {
+            if (element) element.remove();
+        }
+
+        // Fonction pour détecter la langue basée sur des mots-clés
+        function langDetect(text) {
+            const languages = {
+                'fr': ['bonjour', 'je', 'le', 'la', 'les'],
+                'en': ['hello', 'the', 'is', 'and', 'you'],
+                'es': ['hola', 'el', 'la', 'y', 'que'],
+                'de': ['hallo', 'der', 'die', 'und', 'sie'],
+                'it': ['ciao', 'il', 'la', 'e', 'che'],
+                'pt': ['olá', 'o', 'a', 'e', 'que'],
+                'nl': ['hallo', 'de', 'het', 'en', 'dat'],
+                'ru': ['привет', 'и', 'в', 'не', 'на'],
+                'zh': ['你好', '是', '的', '我', '在'],
+                'ja': ['こんにちは', 'の', 'に', 'を', 'です'],
+                'ar': ['مرحبا', 'و', 'في', 'من', 'على']
+            };
+
+            for (const lang in languages) {
+                for (const keyword of languages[lang]) {
+                    if (text.toLowerCase().includes(keyword)) {
+                        return lang;
+                    }
+                }
+            }
+            return 'en'; // Langue par défaut
+        }
+
+        // Fonction pour envoyer les messages
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input').value.trim();
+            const model = document.getElementById('model-select').value;
+
+            if (userInput === '') return;
+
+            displayMessage(userInput, 'user');
+            document.getElementById('user-input').value = '';
+
+            const thinkingIndicator = showThinkingAnimation();
+
+            // Détecter la langue
+            const detectedLanguage = langDetect(userInput);
+            const systemMessage = `Tu t'appelles Jarvis AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée, qui est ${detectedLanguage}.`;
+
+            const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+            const data = {
+                model: "cosmosrp",
+                messages: [
+                    { role: "system", content: systemMessage },
+                    { role: "user", content: userInput }
+                ],
+            };
+
+            try {
+                const response = await fetch(api_url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                removeMessage(thinkingIndicator);
+                const output = result.choices[0]?.message.content || "Désolé, je n'ai pas compris.";
+                displayMessage(output, 'bot');
+
+                // Modification ici pour utiliser la voix italienne masculine
+                responsiveVoice.speak(output, 'Italian Male');
+
+            } catch (error) {
+                removeMessage(thinkingIndicator);
+                displayMessage("Erreur : Impossible de communiquer avec l'API.", 'bot');
+                console.error('Erreur lors de la requête :', error);
+            }
+        }
+
+        // Activation de la reconnaissance vocale
+        recognition.onresult = async (event) => {
+            const current = event.resultIndex;
+            const transcript = event.results[current][0].transcript;
+            document.getElementById('user-input').value = transcript;
+            await sendMessage();
+        };
+
+        btn.addEventListener('click', () => {
+            recognition.start();
+        });
+    </script>
+</body>
+
+</html>
