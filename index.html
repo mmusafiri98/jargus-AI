@@ -5,10 +5,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jargus AI virtual assistant</title>
+    <title>Jargus AI Virtual Assistant</title>
 
-    <!---- CSS Linkage ------>
-
+    <!-- CSS Styles -->
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700&display=swap");
 
@@ -21,77 +20,38 @@
 
         .main {
             min-height: 100vh;
-            position: relative;
-            width: 100%;
-            background: #000;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-
-        .main .image-container {
-            padding: 10px;
-        }
-
-        .main .image-container .image {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .main .image-container .image img {
-            width: 170px;
-            align-items: center;
-        }
-
-        .main .image-container h1 {
-            color: #00bcd4;
+            background: #000;
+            color: #aed0d0;
             text-align: center;
-            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #00bcd4;
             font-size: 40px;
+            margin-bottom: 20px;
         }
 
-        .main .input {
+        .image-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            width: 40vw;
-            height: 50px;
-            border-radius: 20px;
-            background: rgb(202 253 255 / 50%);
-        }
-
-        .main .input .talk {
-            background: transparent;
-            outline: none;
-            border: none;
-            width: 50px;
-            height: 50px;
-            display: flex;
             justify-content: center;
-            align-items: center;
-            font-size: 15px;
-            cursor: pointer;
+            margin-bottom: 20px;
         }
 
-        .main .input .talk i {
-            font-size: 20px;
-            color: #aed0d0;
-        }
-
-        .main .input .content {
-            color: #aed0d0;
-            font-size: 15px;
-            margin-right: 20px;
+        .image-container video {
+            width: 270px;
+            border-radius: 10px;
         }
 
         .dialogue-form {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
         }
 
         .dialogue-form input[type="text"] {
@@ -114,113 +74,62 @@
         .dialogue-response {
             color: #aed0d0;
             margin-top: 20px;
+            text-align: center;
         }
 
         .thinking {
             color: #00bcd4;
             font-weight: bold;
-            margin-top: 20px;
             display: none;
-            /* Initially hidden */
+            margin-top: 10px;
         }
     </style>
-
-    <!---- Font Awesome Cdn Linkage ------>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
 </head>
 
 <body>
     <section class="main">
+        <h1>Jargus AI</h1>
         <div class="image-container">
-            <video width="170" autoplay loop muted>
+            <video autoplay loop muted>
                 <source src="gi.mp4" type="video/mp4">
-
             </video>
-            <h1>Jargus AI</h1>
-        </div>
-        <div class="input">
-            <button class="talk"><i class="fas fa-microphone-alt"></i></button>
-            <h1 class="content">Click here to speak</h1>
         </div>
 
         <!-- Dialogue Form -->
         <div class="dialogue-form">
             <input type="text" id="user-input" placeholder="Type your message here..." />
             <button id="submit-btn">Send</button>
-            <div class="thinking" id="thinking">Jargus is thinking...</div> <!-- Thinking message -->
+            <div class="thinking" id="thinking">Jargus is thinking...</div>
             <div class="dialogue-response" id="response"></div>
         </div>
     </section>
 
-    <!------- Js Linkage --------->
+    <!-- ResponsiveVoice Script -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
 
     <script>
-        const btn = document.querySelector('.talk');
-        const content = document.querySelector('.content');
         const userInput = document.getElementById('user-input');
         const submitBtn = document.getElementById('submit-btn');
         const responseDiv = document.getElementById('response');
-        const thinkingDiv = document.getElementById('thinking'); // Thinking message element
+        const thinkingDiv = document.getElementById('thinking');
 
-        const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée,"; // Adjust as needed
+        const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
 
         function speak(sentence) {
-            const text_speak = new SpeechSynthesisUtterance(sentence);
-            text_speak.rate = 1;
-            text_speak.pitch = 1;
-            window.speechSynthesis.speak(text_speak);
+            responsiveVoice.speak(sentence, "Italian Male", { rate: 1, pitch: 1 });
         }
 
-        function wishMe() {
-            var day = new Date();
-            var hr = day.getHours();
-
-            if (hr >= 0 && hr < 12) {
-                speak("Good Morning Boss");
-            } else if (hr == 12) {
-                speak("Good noon Boss");
-            } else if (hr > 12 && hr <= 17) {
-                speak("Good Afternoon Boss");
-            } else {
-                speak("Good Evening Boss");
-            }
-        }
-
-        window.addEventListener('load', () => {
-            speak("Activating Jargus AI");
-            speak("Going online");
-            wishMe();
-        });
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-
-        recognition.onresult = (event) => {
-            const current = event.resultIndex;
-            const transcript = event.results[current][0].transcript;
-            content.textContent = transcript;
-            speakThis(transcript.toLowerCase());
-        }
-
-        btn.addEventListener('click', () => {
-            recognition.start();
-        });
-
-        // Function to handle sending input to Cosmirop API
         submitBtn.addEventListener('click', async () => {
             const userInputText = userInput.value;
             if (userInputText) {
-                thinkingDiv.style.display = 'block'; // Show thinking message
-                responseDiv.textContent = ''; // Clear previous response
+                thinkingDiv.style.display = 'block';
+                responseDiv.textContent = '';
 
-                // Send to Cosmirop API
                 const response = await sendToCosmirop(userInputText);
-                thinkingDiv.style.display = 'none'; // Hide thinking message
-                responseDiv.textContent = response; // Display the response
-                speak(response); // Speak the response
-                userInput.value = ''; // Clear the input
+                thinkingDiv.style.display = 'none';
+                responseDiv.textContent = response;
+                speak(response);
+                userInput.value = '';
             }
         });
 
@@ -244,83 +153,12 @@
                 });
 
                 const result = await response.json();
-                // Assuming the API returns a structure where response is in result.choices[0].message.content
                 return result.choices[0].message.content;
             } catch (error) {
                 console.error('Error:', error);
-                return "There was an error contacting the assistant.";
+                return "C'è stato un errore nel contattare l'assistente.";
             }
         }
-
-        function speakThis(message) {
-            const speech = new SpeechSynthesisUtterance();
-            speech.text = "I did not understand what you said, please try again.";
-            // comand pour cherche  des articles sur amazon si les messages includes une recherche 
-            if (message.includes('search on amazon')) {
-                //on cree une variables searchterm qui me permete de faire de recherche specifique sur amazon sur en article en particuliere
-                const searchTerm = message.replace('search on amazon', '').trim();
-                //ouverture de la fenetre avec la methode open a partire du lien de amazon.com
-                window.open(`https://www.amazon.com/s?k=${encodeURIComponent(searchTerm)}`, "_blank");
-                speech.text = "Searching for " + searchTerm + " on Amazon";
-                //command pour cherche des articles sur google
-                // Vérifie si le message contient "search on" suivi du nom du site
-            } else if (message.includes('search on')) {
-                // On extrait la partie du message qui suit "search on"
-                const [_, site, ...searchArray] = message.split(' '); // `site` est le `search_key`, `searchArray` est le terme de recherche
-                const searchTerm = searchArray.join(' '); // Combine le reste du message en un terme de recherche complet
-
-                // Génère l'URL de recherche pour le site donné ca encode la demande la recherche sur la navigateur 
-                const searchURL = `https://www.${site}.com/search?q=${encodeURIComponent(searchTerm)}`;
-
-                // Ouvre le lien de recherche pour le site spécifié
-                window.open(searchURL, "_blank");
-                speech.text = `Searching for "${searchTerm}" on ${site}`;
-                //command pour cherche des articles sur google
-                // comand pour cherche  des articles sur amazon si les messages includes une recherche 
-            } else if (message.includes('search on youtube')) {
-                //on cree une variables searchterm qui me permete de faire de recherche specifique sur amazon sur en article en particuliere
-                const searchTerm = message.replace('search on youtube', '').trim();
-                //ouverture de la fenetre avec la methode open a partire du lien de amazon.com
-                window.open(`https://www.youtube.com/s?k=${encodeURIComponent(searchTerm)}`, "_blank");
-                speech.text = "Searching for " + searchTerm + " on youtube";
-
-
-                // General open commands for specific websites
-            } else if (message.includes('open amazon')) {
-                window.open("https://amazon.com", "_blank");
-                speech.text = "Opening Amazon";
-
-            } else if (message.includes('open google')) {
-                window.open("https://google.com", "_blank");
-                speech.text = "Opening Google";
-
-            } else if (message.includes('open instagram')) {
-                window.open("https://instagram.com", "_blank");
-                speech.text = "Opening Instagram";
-            } else if (message.includes('open  facebook')) {
-                window.open("https://facebook.com", "_blank");
-                speech.text = "Opening  facebook";
-                // Default search on Google if the command isn't specific
-            } else {
-                window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`, "_blank");
-                speech.text = "I found some information for " + message + " on Google";
-            }
-
-            // Set and speak the response
-            speech.volume = 1;
-            speech.pitch = 1;
-            speech.rate = 1;
-            window.speechSynthesis.speak(speech);
-        }
-
-
-        // Set and speak the response
-        speech.volume = 1;
-        speech.pitch = 1;
-        speech.rate = 1;
-        window.speechSynthesis.speak(speech);
-
-
     </script>
 </body>
 
