@@ -103,11 +103,10 @@
             <div class="dialogue-response" id="response"></div>
         </div>
     </section>
-
     <!-- ResponsiveVoice Script -->
     <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
-
     <script>
+        //element id de ma page Html commet user input et submit-btn et reponse et thinking 
         const userInput = document.getElementById('user-input');
         const submitBtn = document.getElementById('submit-btn');
         const responseDiv = document.getElementById('response');
@@ -118,23 +117,28 @@
         function speak(sentence) {
             responsiveVoice.speak(sentence, "Italian Male", { rate: 1, pitch: 1 });
         }
-
+        //ajoute de l envenement de submit quand l utilisateur ajoute le message a l AI 
         submitBtn.addEventListener('click', async () => {
             const userInputText = userInput.value;
+            //si l input de l user cette en test on bloc on renvoye le thinking pour signaler l attend de la reponse de l ai 
             if (userInputText) {
                 thinkingDiv.style.display = 'block';
                 responseDiv.textContent = '';
-
+                //renvoye de la reponse a partire de la fonction sendTo cosmirop qui se occupe de repondre
+                //a la reponse de l utilisateur a partire de l Api 
                 const response = await sendToCosmirop(userInputText);
                 thinkingDiv.style.display = 'none';
                 responseDiv.textContent = response;
+                //renvoye de la reponse sous forme parle 
                 speak(response);
+                //assignation du messages de l user en format input
                 userInput.value = '';
             }
         });
-
+        //fonction pour demande la requete a le model cosmiropm
         async function sendToCosmirop(userInput) {
             const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+            //programazione orientata oggetto per dare l instruzione al modelo cosmirop e per inviare l input dell utilizzatore
             const data = {
                 model: "cosmosrp",
                 messages: [
@@ -142,18 +146,21 @@
                     { role: "user", content: userInput }
                 ],
             };
-
+            //prova per aspettare la risposta dell api url del modelo cosmirop
             try {
                 const response = await fetch(api_url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    //rinvio della risposto sotto forma di oggetto in stringa 
                     body: JSON.stringify(data),
                 });
-
+                //variabile che e assegnata ad aspettare una risposta sotto forma json 
                 const result = await response.json();
+                //rinvio del messaggio
                 return result.choices[0].message.content;
+                //se no c e il messaggio di errore
             } catch (error) {
                 console.error('Error:', error);
                 return "C'è stato un errore nel contattare l'assistente.";
