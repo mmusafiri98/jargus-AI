@@ -120,6 +120,7 @@
         let recognizing = false;
         let recognition;
 
+        // Speech recognition setup
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
@@ -153,11 +154,11 @@
         async function handleCommand(transcript) {
             const language = document.getElementById('language-select').value;
             const searchKeyword = language === 'fr' ? "recherche" : language === 'it' ? "cerca" : "search";
-            const amazonKeyword = language === 'fr' ? "amazon" : language === 'it' ? "amazon" : "amazon";
-            const facebookKeyword = language === 'fr' ? "facebook" : language === 'it' ? "facebook" : "facebook";
-            const githubKeyword = language === 'fr' ? "github" : language === 'it' ? "github" : "github";
-            const wikipediaKeyword = language === 'fr' ? "wikipedia" : language === 'it' ? "wikipedia" : "wikipedia";
-            const youtubeKeyword = language === 'fr' ? "youtube" : language === 'it' ? "youtube" : "youtube";
+            const amazonKeyword = "amazon";
+            const facebookKeyword = "facebook";
+            const githubKeyword = "github";
+            const wikipediaKeyword = "wikipedia";
+            const youtubeKeyword = "youtube";
 
             if (transcript.toLowerCase().startsWith(searchKeyword)) {
                 const query = transcript.toLowerCase().replace(searchKeyword, "").trim();
@@ -196,20 +197,20 @@
 
         async function sendMessage(userInputText) {
             const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
+            const language = document.getElementById('language-select').value;
 
             if (userInputText) {
                 thinkingDiv.style.display = 'block';
                 responseDiv.textContent = '';
-                // Passer `systemMessage` comme paramètre ici
                 const response = await sendToCosmirop(userInputText, systemMessage);
                 thinkingDiv.style.display = 'none';
                 responseDiv.textContent = response;
-                speak(response);
+                speak(response, language);
                 userInput.value = '';
             }
         }
 
-        async function sendToCosmirop(userInput, systemMessage) { // Ajout du paramètre systemMessage
+        async function sendToCosmirop(userInput, systemMessage) {
             const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
             const data = {
                 model: "cosmosrp",
@@ -235,9 +236,20 @@
             }
         }
 
-
-        function speak(sentence) {
-            responsiveVoice.speak(sentence, "Italian Male", { rate: 1, pitch: 1 });
+        function speak(sentence, language) {
+            let voice;
+            switch (language) {
+                case 'fr':
+                    voice = "French Female";
+                    break;
+                case 'it':
+                    voice = "Italian Male";
+                    break;
+                default:
+                    voice = "UK English Male";
+                    break;
+            }
+            responsiveVoice.speak(sentence, voice, { rate: 1, pitch: 1 });
         }
 
         submitBtn.addEventListener('click', () => {
