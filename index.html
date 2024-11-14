@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,7 +7,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jargus AI Virtual Assistant</title>
-
     <!-- CSS Styles -->
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700&display=swap");
@@ -95,77 +95,181 @@
             </video>
         </div>
 
-        <!-- Dialogue Form -->
         <div class="dialogue-form">
-            <input type="text" id="user-input" placeholder="Type your message here..." />
-            <button id="submit-btn">Send</button>
-            <div class="thinking" id="thinking">Jargus is thinking...</div>
-            <div class="dialogue-response" id="response"></div>
+            <div>
+                <button id="microphone-button" onclick="toggleSpeechRecognition()">🎤</button>
+            </div>
+            <div class="form-row">
+                <select id="language-select">
+                    <option value="en">English</option>
+                    <option value="it">Italiano</option>
+                    <option value="fr">Français</option>
+                </select>
+                <input type="text" id="user-input" placeholder="Type your message here..." />
+                <button id="submit-btn">Send</button>
+                <div class="thinking" id="thinking">Jargus is thinking...</div>
+                <div class="dialogue-response" id="response"></div>
+            </div>
         </div>
     </section>
-    <!-- ResponsiveVoice Script -->
     <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
     <script>
-        //element id de ma page Html commet user input et submit-btn et reponse et thinking 
         const userInput = document.getElementById('user-input');
         const submitBtn = document.getElementById('submit-btn');
         const responseDiv = document.getElementById('response');
         const thinkingDiv = document.getElementById('thinking');
+        let recognizing = false;
+        let recognition;
 
-        const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = function () {
+                recognizing = true;
+                document.getElementById('microphone-button').classList.add('active-microphone');
+            };
+            recognition.onend = function () {
+                recognizing = false;
+                document.getElementById('microphone-button').classList.remove('active-microphone');
+            };
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('user-input').value = transcript;
+                handleCommand(transcript);
+            };
+        }
+        //fonction pour la reconnaissance vocale 
+        function toggleSpeechRecognition() {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                recognition.lang = document.getElementById('language-select').value === 'fr' ? 'fr-FR' :
+                    document.getElementById('language-select').value === 'it' ? 'it-IT' : 'en-US';
+                recognition.start();
+            }
+        }
+        //fonction pour le command vocal
+        function handleCommand(transcript) {
+            //variable qui stocke l element language select pour selectionne la langue sur mon assistant virtuele            
+            const language = document.getElementById('language-select').value;
+            //variable pour cherche le motsclef recherche 
+            const searchKeyword = language === 'fr' ? "recherche" : language === 'it' ? "cerca" : "search";
+            //variables pour le mots clef amazon pour selctione la langue de l input 
+            const amazonKeyword = language === 'fr' ? "amazon" : language === 'it' ? "amazon" : "amazon";
+            //variables pour le mots clef facebook  pour selectione la langue  de l input 
+            const facebookKeyword = language === 'fr' ? "facebook" : language === 'it' ? "facebook" : "facebook";
+            //variables pour le mots clef github  pour selectione la langue  de l input 
+            const githubKeyword = language === 'fr' ? "github" : language === 'it' ? "github" : "github";
+            //variables pour le mots clef wikipedia  et pour selectione la langue de l input 
+            const wikipediaKeyword = language === 'fr' ? "wikipedia" : language === 'it' ? "wikipedia" : "wikipedia";
+            //variables pour cherche le mots clef youtube en assignant a le differents langue que il ya dans le menu roulant 
+            const youtubeKeyword = language === 'fr' ? "youtube" : language === 'it' ? "youtube" : "youtube";
+
+
+            if (transcript.toLowerCase().startsWith(searchKeyword)) {
+                const query = transcript.toLowerCase().replace(searchKeyword, "").trim();
+                if (query) {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            } else if (transcript.toLowerCase().startsWith(amazonKeyword)) {
+                const query = transcript.toLowerCase().replace(amazonKeyword, "").trim();
+                if (query) {
+                    window.open(`https://www.amazon.com/s?k=${encodeURIComponent(query)}`, '_blank');
+                }
+            } else if (transcript.toLowerCase().startsWith(facebookKeyword)) {
+                const query = transcript.toLowerCase().replace(facebookKeyword, "").trim();
+                if (query) {
+                    window.open(`https://www.facebook.com/search/top?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            } else if (transcript.toLowerCase().startsWith(githubKeyword)) {
+                const query = transcript.toLowerCase().replace(githubKeyword, "").trim();
+                if (query) {
+                    window.open(`https://github.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            } else if (transcript.toLowerCase().startsWith(wikipediaKeyword)) {
+                const query = transcript.toLowerCase().replace(wikipediaKeyword, "").trim();
+                if (query) {
+                    window.open(`https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`, '_blank');
+                }
+            } else if (transcript.toLowerCase().startsWith(youtubeKeyword)) {
+                const query = transcript.toLowerCase().replace(wikipediaKeyword, "").trim();
+                if (query) {
+                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
+                }
+
+            } else {
+                sendMessage(transcript);
+            }
+        }
+
+        function sendMessage(userInputText) {
+            if (userInputText === "dialogue") {
+                responseDiv.textContent = "Dialogue feature activated.";  // Example response
+                speak("Dialogue feature activated.");
+            }
+            //on donne les instruction au model cosmirop pour le faire interagire 
+            const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
+            //ajoute de l envenement de submit quand l utilisateur ajoute le message a l AI 
+            submitBtn.addEventListener('click', async () => {
+                const userInputText = userInput.value;
+                //si l input de l user cette en test on bloc on renvoye le thinking pour signaler l attend de la reponse de l ai 
+                if (userInputText) {
+                    thinkingDiv.style.display = 'block';
+                    responseDiv.textContent = '';
+                    //renvoye de la reponse a partire de la fonction sendTo cosmirop qui se occupe de repondre
+                    //a la reponse de l utilisateur a partire de l Api 
+                    const response = await sendToCosmirop(userInputText);
+                    thinkingDiv.style.display = 'none';
+                    responseDiv.textContent = response;
+                    //renvoye de la reponse sous forme parle 
+                    speak(response);
+                    //assignation du messages de l user en format input
+                    userInput.value = '';
+                }
+            });
+            //fonction pour demande la requete a le model cosmiropm
+            async function sendToCosmirop(userInput) {
+                const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+                //programazione orientata oggetto per dare l instruzione al modelo cosmirop e per inviare l input dell utilizzatore
+                const data = {
+                    model: "cosmosrp",
+                    messages: [
+                        { role: "system", content: systemMessage },
+                        { role: "user", content: userInput }
+                    ],
+                };
+                //prova per aspettare la risposta dell api url del modelo cosmirop
+                try {
+                    const response = await fetch(api_url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        //rinvio della risposto sotto forma di oggetto in stringa 
+                        body: JSON.stringify(data),
+                    });
+                    //variabile che e assegnata ad aspettare una risposta sotto forma json 
+                    const result = await response.json();
+                    //rinvio del messaggio
+                    return result.choices[0].message.content;
+                    //se no c e il messaggio di errore
+                } catch (error) {
+                    console.error('Error:', error);
+                    return "C'è stato un errore nel contattare l'assistente.";
+                }
+            }
+        }
 
         function speak(sentence) {
             responsiveVoice.speak(sentence, "Italian Male", { rate: 1, pitch: 1 });
         }
-        //ajoute de l envenement de submit quand l utilisateur ajoute le message a l AI 
-        submitBtn.addEventListener('click', async () => {
+
+        submitBtn.addEventListener('click', () => {
             const userInputText = userInput.value;
-            //si l input de l user cette en test on bloc on renvoye le thinking pour signaler l attend de la reponse de l ai 
-            if (userInputText) {
-                thinkingDiv.style.display = 'block';
-                responseDiv.textContent = '';
-                //renvoye de la reponse a partire de la fonction sendTo cosmirop qui se occupe de repondre
-                //a la reponse de l utilisateur a partire de l Api 
-                const response = await sendToCosmirop(userInputText);
-                thinkingDiv.style.display = 'none';
-                responseDiv.textContent = response;
-                //renvoye de la reponse sous forme parle 
-                speak(response);
-                //assignation du messages de l user en format input
-                userInput.value = '';
-            }
+            handleCommand(userInputText);
         });
-        //fonction pour demande la requete a le model cosmiropm
-        async function sendToCosmirop(userInput) {
-            const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
-            //programazione orientata oggetto per dare l instruzione al modelo cosmirop e per inviare l input dell utilizzatore
-            const data = {
-                model: "cosmosrp",
-                messages: [
-                    { role: "system", content: systemMessage },
-                    { role: "user", content: userInput }
-                ],
-            };
-            //prova per aspettare la risposta dell api url del modelo cosmirop
-            try {
-                const response = await fetch(api_url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    //rinvio della risposto sotto forma di oggetto in stringa 
-                    body: JSON.stringify(data),
-                });
-                //variabile che e assegnata ad aspettare una risposta sotto forma json 
-                const result = await response.json();
-                //rinvio del messaggio
-                return result.choices[0].message.content;
-                //se no c e il messaggio di errore
-            } catch (error) {
-                console.error('Error:', error);
-                return "C'è stato un errore nel contattare l'assistente.";
-            }
-        }
     </script>
 </body>
 
