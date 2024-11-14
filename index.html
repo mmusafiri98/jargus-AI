@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -140,7 +139,7 @@
                 handleCommand(transcript);
             };
         }
-        //fonction pour la reconnaissance vocale 
+
         function toggleSpeechRecognition() {
             if (recognizing) {
                 recognition.stop();
@@ -150,23 +149,15 @@
                 recognition.start();
             }
         }
-        //fonction pour le command vocal
-        function handleCommand(transcript) {
-            //variable qui stocke l element language select pour selectionne la langue sur mon assistant virtuele            
-            const language = document.getElementById('language-select').value;
-            //variable pour cherche le motsclef recherche 
-            const searchKeyword = language === 'fr' ? "recherche" : language === 'it' ? "cerca" : "search";
-            //variables pour le mots clef amazon pour selctione la langue de l input 
-            const amazonKeyword = language === 'fr' ? "amazon" : language === 'it' ? "amazon" : "amazon";
-            //variables pour le mots clef facebook  pour selectione la langue  de l input 
-            const facebookKeyword = language === 'fr' ? "facebook" : language === 'it' ? "facebook" : "facebook";
-            //variables pour le mots clef github  pour selectione la langue  de l input 
-            const githubKeyword = language === 'fr' ? "github" : language === 'it' ? "github" : "github";
-            //variables pour le mots clef wikipedia  et pour selectione la langue de l input 
-            const wikipediaKeyword = language === 'fr' ? "wikipedia" : language === 'it' ? "wikipedia" : "wikipedia";
-            //variables pour cherche le mots clef youtube en assignant a le differents langue que il ya dans le menu roulant 
-            const youtubeKeyword = language === 'fr' ? "youtube" : language === 'it' ? "youtube" : "youtube";
 
+        async function handleCommand(transcript) {
+            const language = document.getElementById('language-select').value;
+            const searchKeyword = language === 'fr' ? "recherche" : language === 'it' ? "cerca" : "search";
+            const amazonKeyword = language === 'fr' ? "amazon" : language === 'it' ? "amazon" : "amazon";
+            const facebookKeyword = language === 'fr' ? "facebook" : language === 'it' ? "facebook" : "facebook";
+            const githubKeyword = language === 'fr' ? "github" : language === 'it' ? "github" : "github";
+            const wikipediaKeyword = language === 'fr' ? "wikipedia" : language === 'it' ? "wikipedia" : "wikipedia";
+            const youtubeKeyword = language === 'fr' ? "youtube" : language === 'it' ? "youtube" : "youtube";
 
             if (transcript.toLowerCase().startsWith(searchKeyword)) {
                 const query = transcript.toLowerCase().replace(searchKeyword, "").trim();
@@ -194,73 +185,56 @@
                     window.open(`https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`, '_blank');
                 }
             } else if (transcript.toLowerCase().startsWith(youtubeKeyword)) {
-                const query = transcript.toLowerCase().replace(wikipediaKeyword, "").trim();
+                const query = transcript.toLowerCase().replace(youtubeKeyword, "").trim();
                 if (query) {
                     window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
                 }
-
             } else {
                 sendMessage(transcript);
             }
         }
 
-        function sendMessage(userInputText) {
-            if (userInputText === "dialogue") {
-                responseDiv.textContent = "Dialogue feature activated.";  // Example response
-                speak("Dialogue feature activated.");
-            }
-            //on donne les instruction au model cosmirop pour le faire interagire 
+        async function sendMessage(userInputText) {
             const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
-            //ajoute de l envenement de submit quand l utilisateur ajoute le message a l AI 
-            submitBtn.addEventListener('click', async () => {
-                const userInputText = userInput.value;
-                //si l input de l user cette en test on bloc on renvoye le thinking pour signaler l attend de la reponse de l ai 
-                if (userInputText) {
-                    thinkingDiv.style.display = 'block';
-                    responseDiv.textContent = '';
-                    //renvoye de la reponse a partire de la fonction sendTo cosmirop qui se occupe de repondre
-                    //a la reponse de l utilisateur a partire de l Api 
-                    const response = await sendToCosmirop(userInputText);
-                    thinkingDiv.style.display = 'none';
-                    responseDiv.textContent = response;
-                    //renvoye de la reponse sous forme parle 
-                    speak(response);
-                    //assignation du messages de l user en format input
-                    userInput.value = '';
-                }
-            });
-            //fonction pour demande la requete a le model cosmiropm
-            async function sendToCosmirop(userInput) {
-                const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
-                //programazione orientata oggetto per dare l instruzione al modelo cosmirop e per inviare l input dell utilizzatore
-                const data = {
-                    model: "cosmosrp",
-                    messages: [
-                        { role: "system", content: systemMessage },
-                        { role: "user", content: userInput }
-                    ],
-                };
-                //prova per aspettare la risposta dell api url del modelo cosmirop
-                try {
-                    const response = await fetch(api_url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        //rinvio della risposto sotto forma di oggetto in stringa 
-                        body: JSON.stringify(data),
-                    });
-                    //variabile che e assegnata ad aspettare una risposta sotto forma json 
-                    const result = await response.json();
-                    //rinvio del messaggio
-                    return result.choices[0].message.content;
-                    //se no c e il messaggio di errore
-                } catch (error) {
-                    console.error('Error:', error);
-                    return "C'è stato un errore nel contattare l'assistente.";
-                }
+
+            if (userInputText) {
+                thinkingDiv.style.display = 'block';
+                responseDiv.textContent = '';
+                // Passer `systemMessage` comme paramètre ici
+                const response = await sendToCosmirop(userInputText, systemMessage);
+                thinkingDiv.style.display = 'none';
+                responseDiv.textContent = response;
+                speak(response);
+                userInput.value = '';
             }
         }
+
+        async function sendToCosmirop(userInput, systemMessage) { // Ajout du paramètre systemMessage
+            const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+            const data = {
+                model: "cosmosrp",
+                messages: [
+                    { role: "system", content: systemMessage },
+                    { role: "user", content: userInput }
+                ],
+            };
+
+            try {
+                const response = await fetch(api_url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+                return result.choices[0].message.content;
+            } catch (error) {
+                console.error('Error:', error);
+                return "C'è stato un errore nel contattare l'assistente.";
+            }
+        }
+
 
         function speak(sentence) {
             responsiveVoice.speak(sentence, "Italian Male", { rate: 1, pitch: 1 });
