@@ -1,140 +1,49 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jargus AI - Assistant Virtuel</title>
-    
-    <!-- Styles CSS -->
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap");
-
-        body {
-            font-family: "Roboto", sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-        }
-
-        h1 {
-            color: #00bcd4;
-        }
-
-        video {
-            width: 100%;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .chat-box {
-            display: flex;
-            flex-direction: column;
-            margin-top: 10px;
-        }
-
-        input {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        button {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background-color: #00bcd4;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .response-box {
-            margin-top: 15px;
-            font-size: 1.1em;
-            color: #aed0d0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPT-2 with TensorFlow.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-node"></script> <!-- Se usi Node.js -->
 </head>
 <body>
 
-    <div class="container">
-        <h1>Jargus AI 🤖</h1>
-        
-        <video autoplay loop muted>
-            <source src="gi.mp4" type="video/mp4">
-        </video>
+<h1>Generazione di Testo con GPT-2</h1>
+<textarea id="inputText" placeholder="Inserisci il testo..." rows="5" cols="50"></textarea><br><br>
+<button onclick="generateText()">Genera Testo</button>
 
-        <div class="chat-box">
-            <input type="text" id="user-input" placeholder="Pose-moi une question...">
-            <button id="send-btn">Envoyer</button>
-        </div>
-        
-        <div id="response" class="response-box"></div>
-    </div>
+<div id="output"></div>
 
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
-    
-    <script>
-        async function askGPT2(prompt) {
-            const apiUrl = "https://api-inference.huggingface.co/models/gpt2";
+<script>
+  let model;
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ inputs: prompt })
-                });
+  // Funzione per caricare il modello
+  async function loadModel() {
+    model = await tf.loadLayersModel('URL_DEL_TUO_MODELLO_GPT2');  // Sostituisci con il percorso del tuo modello
+    console.log("Modello GPT-2 caricato!");
+  }
 
-                const data = await response.json();
+  // Funzione per generare il testo
+  async function generateText() {
+    const inputText = document.getElementById('inputText').value;
 
-                if (data.error) {
-                    return "⏳ Le modèle est peut-être en veille. Réessaie plus tard.";
-                }
+    if (model) {
+      const inputTensor = tf.tensor([inputText]);  // Pre-processa il testo in tensor
+      const output = await model.predict(inputTensor);  // Predizione tramite il modello
 
-                return data[0]?.generated_text || "🤖 Je n'ai pas compris.";
-            } catch (error) {
-                console.error("Erreur API:", error);
-                return "❌ Erreur de connexion à l'API.";
-            }
-        }
+      // Aggiungi il risultato dell'output al div "output"
+      document.getElementById('output').innerText = output;
+    } else {
+      console.log("Modello non caricato!");
+    }
+  }
 
-        document.getElementById("send-btn").addEventListener("click", async () => {
-            const userInput = document.getElementById("user-input").value;
-            const responseBox = document.getElementById("response");
-
-            if (userInput.trim() === "") {
-                responseBox.innerHTML = "⚠️ Saisis une question avant d'envoyer.";
-                return;
-            }
-
-            responseBox.innerHTML = "⏳ Jargus réfléchit...";
-            const response = await askGPT2(userInput);
-
-            responseBox.innerHTML = response;
-            speakResponse(response);
-        });
-
-        function speakResponse(text) {
-            responsiveVoice.speak(text, "French Male", { rate: 1 });
-        }
-    </script>
+  // Carica il modello all'avvio della pagina
+  window.onload = loadModel;
+</script>
 
 </body>
 </html>
+
 
