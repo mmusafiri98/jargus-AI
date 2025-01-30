@@ -1,262 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jargus AI Virtual Assistant</title>
-    <!-- CSS Styles -->
+    <title>Jargus AI - Assistant Virtuel</title>
+    
+    <!-- Styles CSS -->
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap");
 
-        * {
+        body {
+            font-family: "Roboto", sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Roboto Mono", monospace;
         }
 
-        .main {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            color: #aed0d0;
-            text-align: center;
+        .container {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
         h1 {
             color: #00bcd4;
-            font-size: 40px;
-            margin-bottom: 20px;
         }
 
-        .image-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .image-container video {
-            width: 270px;
+        video {
+            width: 100%;
             border-radius: 10px;
+            margin-bottom: 20px;
         }
 
-        .dialogue-form {
+        .chat-box {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            margin-top: 10px;
         }
 
-        .dialogue-form input[type="text"] {
-            width: 300px;
+        input {
             padding: 10px;
-            margin-bottom: 10px;
+            border: none;
             border-radius: 5px;
-            border: 1px solid #00bcd4;
+            margin-bottom: 10px;
+            font-size: 16px;
         }
 
-        .dialogue-form button {
-            padding: 10px 20px;
+        button {
+            padding: 10px;
             border: none;
             border-radius: 5px;
             background-color: #00bcd4;
             color: white;
+            font-size: 16px;
             cursor: pointer;
         }
 
-        .dialogue-response {
+        .response-box {
+            margin-top: 15px;
+            font-size: 1.1em;
             color: #aed0d0;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .thinking {
-            color: #00bcd4;
-            font-weight: bold;
-            display: none;
-            margin-top: 10px;
         }
     </style>
 </head>
-
 <body>
-    <section class="main">
-        <h1>Jargus AI</h1>
-        <div class="image-container">
-            <video autoplay loop muted>
-                <source src="gi.mp4" type="video/mp4">
-            </video>
-        </div>
 
-        <div class="dialogue-form">
-            <div>
-                <button id="microphone-button" onclick="toggleSpeechRecognition()">🎤</button>
-            </div>
-            <div class="form-row">
-                <select id="language-select">
-                    <option value="en">English</option>
-                    <option value="it">Italiano</option>
-                    <option value="fr">Français</option>
-                </select>
-                <input type="text" id="user-input" placeholder="Type your message here..." />
-                <button id="submit-btn">Send</button>
-                <div class="thinking" id="thinking">Jargus is thinking...</div>
-                <div class="dialogue-response" id="response"></div>
-            </div>
+    <div class="container">
+        <h1>Jargus AI 🤖</h1>
+        
+        <video autoplay loop muted>
+            <source src="gi.mp4" type="video/mp4">
+        </video>
+
+        <div class="chat-box">
+            <input type="text" id="user-input" placeholder="Pose-moi une question...">
+            <button id="send-btn">Envoyer</button>
         </div>
-    </section>
+        
+        <div id="response" class="response-box"></div>
+    </div>
+
     <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
+    
     <script>
-        const userInput = document.getElementById('user-input');
-        const submitBtn = document.getElementById('submit-btn');
-        const responseDiv = document.getElementById('response');
-        const thinkingDiv = document.getElementById('thinking');
-        let recognizing = false;
-        let recognition;
-
-        // Speech recognition setup
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            recognition.onstart = function () {
-                recognizing = true;
-                document.getElementById('microphone-button').classList.add('active-microphone');
-            };
-            recognition.onend = function () {
-                recognizing = false;
-                document.getElementById('microphone-button').classList.remove('active-microphone');
-            };
-            recognition.onresult = function (event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('user-input').value = transcript;
-                handleCommand(transcript);
-            };
-        }
-
-        function toggleSpeechRecognition() {
-            if (recognizing) {
-                recognition.stop();
-            } else {
-                recognition.lang = document.getElementById('language-select').value === 'fr' ? 'fr-FR' :
-                    document.getElementById('language-select').value === 'it' ? 'it-IT' : 'en-US';
-                recognition.start();
-            }
-        }
-
-        async function handleCommand(transcript) {
-            const language = document.getElementById('language-select').value;
-            const searchKeyword = language === 'fr' ? "recherche" : language === 'it' ? "cerca" : "search";
-            const amazonKeyword = "amazon";
-            const facebookKeyword = "facebook";
-            const githubKeyword = "github";
-            const wikipediaKeyword = "wikipedia";
-            const youtubeKeyword = "youtube";
-
-            if (transcript.toLowerCase().startsWith(searchKeyword)) {
-                const query = transcript.toLowerCase().replace(searchKeyword, "").trim();
-                if (query) {
-                    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else if (transcript.toLowerCase().startsWith(amazonKeyword)) {
-                const query = transcript.toLowerCase().replace(amazonKeyword, "").trim();
-                if (query) {
-                    window.open(`https://www.amazon.com/s?k=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else if (transcript.toLowerCase().startsWith(facebookKeyword)) {
-                const query = transcript.toLowerCase().replace(facebookKeyword, "").trim();
-                if (query) {
-                    window.open(`https://www.facebook.com/search/top?q=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else if (transcript.toLowerCase().startsWith(githubKeyword)) {
-                const query = transcript.toLowerCase().replace(githubKeyword, "").trim();
-                if (query) {
-                    window.open(`https://github.com/search?q=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else if (transcript.toLowerCase().startsWith(wikipediaKeyword)) {
-                const query = transcript.toLowerCase().replace(wikipediaKeyword, "").trim();
-                if (query) {
-                    window.open(`https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else if (transcript.toLowerCase().startsWith(youtubeKeyword)) {
-                const query = transcript.toLowerCase().replace(youtubeKeyword, "").trim();
-                if (query) {
-                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
-                }
-            } else {
-                sendMessage(transcript);
-            }
-        }
-
-        async function sendMessage(userInputText) {
-            const systemMessage = "Tu t'appelles Jargus AI, un assistant virtuel avancé créé par Pepe Musafiri. Réponds uniquement dans la langue détectée.";
-            const language = document.getElementById('language-select').value;
-
-            if (userInputText) {
-                thinkingDiv.style.display = 'block';
-                responseDiv.textContent = '';
-                const response = await sendToCosmirop(userInputText, systemMessage);
-                thinkingDiv.style.display = 'none';
-                responseDiv.textContent = response;
-                speak(response, language);
-                userInput.value = '';
-            }
-        }
-
-        async function sendToCosmirop(userInput, systemMessage) {
-            const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
-            const data = {
-                model: "cosmosrp",
-                messages: [
-                    { role: "system", content: systemMessage },
-                    { role: "user", content: userInput }
-                ],
-            };
+        async function askGPT2(prompt) {
+            const apiUrl = "https://api-inference.huggingface.co/models/gpt2";
 
             try {
-                const response = await fetch(api_url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ inputs: prompt })
                 });
-                const result = await response.json();
-                return result.choices[0].message.content;
+
+                const data = await response.json();
+
+                if (data.error) {
+                    return "⏳ Le modèle est peut-être en veille. Réessaie plus tard.";
+                }
+
+                return data[0]?.generated_text || "🤖 Je n'ai pas compris.";
             } catch (error) {
-                console.error('Error:', error);
-                return "C'è stato un errore nel contattare l'assistente.";
+                console.error("Erreur API:", error);
+                return "❌ Erreur de connexion à l'API.";
             }
         }
 
-        function speak(sentence, language) {
-            let voice;
-            switch (language) {
-                case 'fr':
-                    voice = "French Male";
-                    break;
-                case 'it':
-                    voice = "Italian Male";
-                    break;
-                default:
-                    voice = "UK English Male";
-                    break;
-            }
-            responsiveVoice.speak(sentence, voice, { rate: 1, pitch: 1 });
-        }
+        document.getElementById("send-btn").addEventListener("click", async () => {
+            const userInput = document.getElementById("user-input").value;
+            const responseBox = document.getElementById("response");
 
-        submitBtn.addEventListener('click', () => {
-            const userInputText = userInput.value;
-            handleCommand(userInputText);
+            if (userInput.trim() === "") {
+                responseBox.innerHTML = "⚠️ Saisis une question avant d'envoyer.";
+                return;
+            }
+
+            responseBox.innerHTML = "⏳ Jargus réfléchit...";
+            const response = await askGPT2(userInput);
+
+            responseBox.innerHTML = response;
+            speakResponse(response);
         });
-    </script>
-</body>
 
+        function speakResponse(text) {
+            responsiveVoice.speak(text, "French Male", { rate: 1 });
+        }
+    </script>
+
+</body>
 </html>
+
