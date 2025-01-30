@@ -1,61 +1,56 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jargus AI - Assistant Virtuel</title>
-    
-    <!-- Styles CSS -->
+    <title>Jargus AI - Assistente Virtuale</title>
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap");
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
 
         body {
-            font-family: "Roboto", sans-serif;
             background-color: #121212;
-            color: #ffffff;
+            color: white;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            flex-direction: column;
         }
 
         h1 {
             color: #00bcd4;
+            margin-bottom: 10px;
         }
 
-        video {
-            width: 100%;
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background: #1e1e1e;
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .chat-box {
-            display: flex;
-            flex-direction: column;
-            margin-top: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 188, 212, 0.5);
         }
 
         input {
+            width: 100%;
             padding: 10px;
             border: none;
             border-radius: 5px;
-            margin-bottom: 10px;
+            margin-top: 10px;
             font-size: 16px;
         }
 
         button {
-            padding: 10px;
+            margin-top: 10px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             background-color: #00bcd4;
@@ -64,74 +59,114 @@
             cursor: pointer;
         }
 
-        .response-box {
+        button:hover {
+            background-color: #0097a7;
+        }
+
+        .response {
             margin-top: 15px;
-            font-size: 1.1em;
+            padding: 10px;
+            background: #2c2c2c;
+            border-radius: 5px;
+            font-size: 16px;
             color: #aed0d0;
+            text-align: left;
+        }
+
+        .thinking {
+            color: #00bcd4;
+            font-weight: bold;
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
+    <h1>Jargus AI</h1>
     <div class="container">
-        <h1>Jargus AI 🤖</h1>
-        
-        <video autoplay loop muted>
-            <source src="gi.mp4" type="video/mp4">
-        </video>
-
-        <div class="chat-box">
-            <input type="text" id="user-input" placeholder="Pose-moi une question...">
-            <button id="send-btn">Envoyer</button>
-        </div>
-        
-        <div id="response" class="response-box"></div>
+        <input type="text" id="user-input" placeholder="Scrivi un messaggio...">
+        <button onclick="sendMessage()">Invia</button>
+        <button onclick="toggleSpeechRecognition()">🎤 Parla</button>
+        <div class="thinking" id="thinking">Jargus sta pensando...</div>
+        <div class="response" id="response"></div>
     </div>
 
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
-    
     <script>
-        async function askGPT2(prompt) {
-            const apiUrl = "https://api-inference.huggingface.co/models/gpt2";
+        const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+        const responseDiv = document.getElementById('response');
+        const thinkingDiv = document.getElementById('thinking');
+        const userInput = document.getElementById('user-input');
+        let recognizing = false;
+        let recognition;
+
+        // Funzione per inviare un messaggio all'IA
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            thinkingDiv.style.display = 'block';
+            responseDiv.innerHTML = "";
 
             try {
                 const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ inputs: prompt })
+                    body: JSON.stringify({
+                        model: "mistral", // Modello veloce
+                        messages: [{ role: "user", content: message }]
+                    })
                 });
 
                 const data = await response.json();
-
-                if (data.error) {
-                    return "⏳ Le modèle est peut-être en veille. Réessaie plus tard.";
-                }
-
-                return data[0]?.generated_text || "🤖 Je n'ai pas compris.";
+                thinkingDiv.style.display = 'none';
+                responseDiv.innerHTML = `<strong>Jargus:</strong> ${data.choices[0].message.content}`;
+                userInput.value = "";
+                speak(data.choices[0].message.content);
             } catch (error) {
-                console.error("Erreur API:", error);
-                return "❌ Erreur de connexion à l'API.";
+                responseDiv.innerHTML = "Errore nella connessione all'AI.";
+                thinkingDiv.style.display = 'none';
+                console.error("Errore:", error);
             }
         }
 
-        document.getElementById("send-btn").addEventListener("click", async () => {
-            const userInput = document.getElementById("user-input").value;
-            const responseBox = document.getElementById("response");
-
-            if (userInput.trim() === "") {
-                responseBox.innerHTML = "⚠️ Saisis une question avant d'envoyer.";
-                return;
+        // Funzione per la sintesi vocale
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "it-IT";
+                speechSynthesis.speak(utterance);
             }
+        }
 
-            responseBox.innerHTML = "⏳ Jargus réfléchit...";
-            const response = await askGPT2(userInput);
+        // Funzione per il riconoscimento vocale
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-            responseBox.innerHTML = response;
-            speakResponse(response);
-        });
+            recognition.onstart = function () {
+                recognizing = true;
+            };
 
-        function speakResponse(text) {
-            responsiveVoice.speak(text, "French Male", { rate: 1 });
+            recognition.onend = function () {
+                recognizing = false;
+            };
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            };
+        }
+
+        function toggleSpeechRecognition() {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                recognition.lang = "it-IT";
+                recognition.start();
+            }
         }
     </script>
 
