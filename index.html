@@ -1,264 +1,512 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS AI Assistant</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JARVIS AI — Interface</title>
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <!-- Bootstrap (optionnel, pour composants rapides) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            background: radial-gradient(circle at center, #03121f, #000000 80%);
-            font-family: "Orbitron", sans-serif;
-            color: #00eaff;
-            height: 100vh;
-            overflow: hidden;
-        }
+  <style>
+    :root{
+      --accent:#00eaff;
+      --bg1:#020610;
+      --panel-bg: rgba(0, 255, 255, 0.06);
+      --glass: rgba(0,20,30,0.45);
+    }
 
-        .container-ai {
-            height: 100vh;
-            display: grid;
-            grid-template-columns: 1fr 1.2fr 1fr;
-            gap: 20px;
-            padding-top: 20px;
-        }
+    html,body{
+      height:100%;
+      margin:0;
+      background: radial-gradient(circle at 20% 10%, #041025 0%, #000 60%);
+      font-family:"Orbitron", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:var(--accent);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
 
-        /* Panels */
-        .panel {
-            border: 2px solid #00eaff;
-            border-radius: 15px;
-            background: rgba(0, 255, 255, 0.06);
-            box-shadow: 0 0 20px #00eaff;
-            padding: 15px;
-        }
+    /* Layout responsive: single column on small screens */
+    .app-grid{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns: 320px 1fr 320px;
+      gap:20px;
+      padding:20px;
+      box-sizing:border-box;
+    }
 
-        /* Center Panel */
-        #center-panel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+    /* Mobile fallback */
+    @media (max-width: 992px){
+      .app-grid{
+        grid-template-columns: 1fr;
+        padding:12px;
+      }
+      .center-panel{ order: 0; height: 48vh; }
+      .left-panel{ order: 1; }
+      .right-panel{ order: 2; display:none; } /* cacher le panneau droit sur mobile */
+    }
 
-        #jarvis-gif {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; 
-            opacity: 0.9;
-        }
+    /* Panels */
+    .panel{
+      background: var(--panel-bg);
+      border: 1px solid rgba(0,255,255,0.08);
+      border-radius:14px;
+      padding:14px;
+      box-shadow: 0 6px 30px rgba(0,160,255,0.04);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:hidden;
+    }
 
-        /* Chat */
-        #response {
-            height: 260px;
-            overflow-y: auto;
-            color: #b7ffff;
-            font-size: 1.1rem;
-        }
+    /* LEFT: chat + controls */
+    .left-panel .title{
+      text-align:center;
+      font-size:1.15rem;
+      font-weight:700;
+      color:var(--accent);
+      letter-spacing:1px;
+    }
 
-        #thinking {
-            display: none;
-            font-size: 1.1rem;
-            margin-top: 10px;
-            text-align: center;
-            animation: blink 1.2s infinite;
-        }
+    #response {
+      background: rgba(0,10,16,0.25);
+      border:1px solid rgba(0,255,255,0.03);
+      border-radius:8px;
+      padding:10px;
+      height:60vh;
+      overflow:auto;
+      box-sizing:border-box;
+      color:#dff9ff;
+    }
 
-        @keyframes blink {
-            50% { opacity: 0.3; }
-        }
+    .msg-user{
+      margin:8px 0;
+      align-self:flex-end;
+      background: linear-gradient(135deg, rgba(0,255,255,0.06), rgba(0,255,255,0.02));
+      padding:8px 12px;
+      border-radius:12px;
+      border-left:3px solid rgba(0,200,255,0.2);
+      color:#dff9ff;
+      max-width:85%;
+      word-wrap:break-word;
+    }
 
-        /* Inputs */
-        #user-input {
-            background: rgba(0, 80, 100, 0.4);
-            border: 1px solid #00eaff;
-            color: #b7ffff;
-        }
+    .msg-jarvis{
+      margin:8px 0;
+      align-self:flex-start;
+      background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+      padding:10px 12px;
+      border-radius:12px;
+      border-left:3px solid var(--accent);
+      color:#e6ffff;
+      max-width:90%;
+      word-wrap:break-word;
+    }
 
-        #submit-btn, #mic-btn {
-            background: #00eaff;
-            border: none;
-            color: #000;
-            font-weight: bold;
-        }
+    .thinking{
+      font-style:italic;
+      opacity:0.9;
+      text-align:center;
+      color:var(--accent);
+    }
 
-        #mic-btn {
-            background: #003b49;
-            color: #00eaff;
-            border: 1px solid #00eaff;
-        }
+    /* Input area */
+    .input-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .input-row input[type="text"]{
+      flex:1;
+      padding:12px 12px;
+      border-radius:10px;
+      border:1px solid rgba(0,255,255,0.12);
+      background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.2));
+      color:var(--accent);
+      outline:none;
+    }
+    .action-btn{
+      background:var(--accent);
+      color:#000;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      box-shadow:0 6px 18px rgba(0,130,200,0.12);
+    }
+    .mic-btn{
+      background:transparent;
+      border:1px solid var(--accent);
+      color:var(--accent);
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      cursor:pointer;
+    }
+    .mic-btn.listening{
+      box-shadow: 0 0 18px rgba(0,255,200,0.5);
+      transform:scale(1.06);
+    }
 
-        /* Typing effect */
-        .typing {
-            border-right: 3px solid #00eaff;
-            white-space: nowrap;
-            overflow: hidden;
-            width: 0;
-            animation: typing 3s steps(40, end) forwards, blink-cursor 0.75s infinite;
-        }
+    /* CENTER panel - big GIF responsive */
+    .center-panel{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:14px;
+      overflow:hidden;
+      position:relative;
+      min-height:60vh;
+    }
 
-        @keyframes typing {
-            from { width: 0; }
-            to   { width: 100%; }
-        }
+    /* GIF styling: fill the container responsively */
+    #jarvis-gif{
+      width:100%;
+      height:100%;
+      object-fit:cover; /* cover = remplit totalement (peut crop), contain = garde tout visible */
+      display:block;
+      transition: transform 0.15s ease;
+      will-change: transform, filter;
+      pointer-events:none;
+    }
 
-        @keyframes blink-cursor {
-            50% { border-color: transparent; }
-        }
-    </style>
+    /* speaking animation (pulsation + small translate to simulate movement) */
+    .speaking #jarvis-gif{
+      animation: jarvis-voice 0.5s infinite ease-in-out;
+      transform-origin:center center;
+      filter: drop-shadow(0 10px 30px rgba(0,160,255,0.12));
+    }
+
+    @keyframes jarvis-voice {
+      0% { transform: scale(1) translateY(0); }
+      25% { transform: scale(1.02) translateY(-3px); }
+      50% { transform: scale(0.995) translateY(0); }
+      75% { transform: scale(1.03) translateY(3px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+
+    /* RIGHT panel - info (hidden on small) */
+    .right-panel .title{
+      text-align:center;
+      font-weight:700;
+      color:var(--accent);
+      margin-bottom:8px;
+    }
+
+    /* small devices: ensure center GIF is still visible and responsive */
+    @media (max-width:768px){
+      #jarvis-gif { object-fit:contain; } /* ensure full image visible on small screens */
+      .center-panel { min-height:40vh; }
+      #response { height:40vh; }
+    }
+
+  </style>
 </head>
-
 <body>
 
-    <div class="container-ai container">
+  <div class="app-grid">
 
-        <!-- LEFT PANEL -->
-        <div class="panel">
-            <h3 class="text-center">JARVIS AI</h3>
+    <!-- LEFT: Chat panel -->
+    <div class="panel left-panel">
+      <div class="title">JARVIS AI — Assistant</div>
 
-            <div id="response"></div>
-            <div id="thinking">JARVIS Thinking…</div>
+      <div id="response" aria-live="polite" role="log">
+        <!-- messages will appear here -->
+      </div>
 
-            <input id="user-input" type="text" class="form-control mt-3" placeholder="Écris ton message">
+      <div id="thinking" class="thinking" style="display:none;">JARVIS Thinking…</div>
 
-            <div class="d-flex gap-2 mt-3">
-                <button id="submit-btn" class="btn w-100">Envoyer</button>
-                <button id="mic-btn" class="btn">🎤</button>
-            </div>
-        </div>
-
-        <!-- CENTER PANEL -->
-        <div id="center-panel" class="panel">
-            <img id="jarvis-gif" src="jarvis.gif" alt="JARVIS AI">
-        </div>
-
-        <!-- RIGHT PANEL -->
-        <div class="panel">
-            <h3 class="text-center">Système</h3>
-            <p>Fonctions avancées disponibles bientôt.</p>
-        </div>
-
+      <div class="input-row" style="margin-top:8px;">
+        <input id="user-input" type="text" placeholder="Écris ou parle à JARVIS..." aria-label="Message utilisateur" />
+        <button id="mic-btn" class="mic-btn" title="Activer le micro">🎤</button>
+        <button id="send-btn" class="action-btn" title="Envoyer">Envoyer</button>
+      </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CENTER: big GIF -->
+    <div class="panel center-panel" id="center-panel">
+      <!-- Use the uploaded image path (local). Your infra will transform it to a URL as requested. -->
+      <img id="jarvis-gif" src="/mnt/data/0622f009-ca80-416c-8fa5-3ae1944a13e2.png" alt="JARVIS Animation">
+    </div>
 
-    <!-- ResponsiveVoice -->
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
+    <!-- RIGHT: system info -->
+    <div class="panel right-panel">
+      <div class="title">Système</div>
+      <div>Statut : <strong style="color:#8bffcf">En ligne</strong></div>
+      <div style="margin-top:8px;">Modèle : <strong>CosmosRP</strong></div>
+      <div style="margin-top:8px;">Langue : <strong>Français</strong></div>
+      <div style="margin-top:14px; font-size:0.95rem; color:#cdefff">
+        Tips :
+        <ul>
+          <li>Appuie sur 🎤 pour parler</li>
+          <li>Appuie sur Envoyer pour taper</li>
+        </ul>
+      </div>
+    </div>
 
-    <script>
-        const userInput = document.getElementById('user-input');
-        const submitBtn = document.getElementById('submit-btn');
-        const responseDiv = document.getElementById('response');
-        const thinkingDiv = document.getElementById('thinking');
-        const micBtn = document.getElementById('mic-btn');
+  </div>
 
-        const systemMessage =
-            "Tu es JARVIS AI, un assistant virtuel homme, intelligent et professionnel, créé par Pepe Musafiri. " +
-            "Tu réponds dans la langue de l'utilisateur et tu restes courtois et logique.";
+  <!-- Bootstrap JS (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        /* ===================== VOIX ===================== */
-        function speak(sentence) {
-            responsiveVoice.speak(sentence, "UK English Male", {
-                rate: 1,
-                pitch: 1
-            });
-        }
+  <!-- ResponsiveVoice TTS -->
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=A0SDeHMK"></script>
 
-        /* ===================== TYPING EFFECT ===================== */
-        function typeWriterEffect(text, element, speed = 25) {
-            let i = 0;
-            element.innerHTML = "";
-            function type() {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
-                    setTimeout(type, speed);
-                }
+  <script>
+    // Elements
+    const responseEl = document.getElementById('response');
+    const thinkingEl = document.getElementById('thinking');
+    const userInputEl = document.getElementById('user-input');
+    const micBtn = document.getElementById('mic-btn');
+    const sendBtn = document.getElementById('send-btn');
+    const centerPanel = document.getElementById('center-panel');
+
+    // System prompt
+    const systemMessage = "Tu es JARVIS AI, assistant virtuel masculin, poli, professionnel, créé par Pepe Musafiri. Réponds en français, de manière claire et concise.";
+
+    // Helper: add user message
+    function addUserMessage(text){
+      const div = document.createElement('div');
+      div.className = 'msg-user';
+      div.textContent = text;
+      responseEl.appendChild(div);
+      responseEl.scrollTop = responseEl.scrollHeight;
+    }
+
+    // Helper: add jarvis placeholder (empty) and return span where to type into
+    function addJarvisMessagePlaceholder(){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg-jarvis';
+      const strong = document.createElement('strong');
+      strong.textContent = 'JARVIS: ';
+      wrapper.appendChild(strong);
+      const span = document.createElement('span');
+      span.setAttribute('aria-live','polite');
+      span.style.display='inline-block';
+      wrapper.appendChild(span);
+      responseEl.appendChild(wrapper);
+      responseEl.scrollTop = responseEl.scrollHeight;
+      return span;
+    }
+
+    // Typing effect that types while speech plays.
+    function typeWithSpeech(text, targetSpan, onDone){
+      // Start speech with ResponsiveVoice in French male and with callbacks
+      // Note: responsiveVoice supports onstart/onend in options
+      // We will start both concurrently: speech and typing.
+      let idx = 0;
+      const speed = 24; // ms per char approx -> adjust for sync
+      // Kick off voice
+      try {
+        responsiveVoice.speak(text, "French Male", {
+          rate: 1,
+          pitch: 1,
+          onstart: () => {
+            // add speaking class to center panel (animates GIF)
+            centerPanel.classList.add('speaking');
+            // mark mic button if needed
+          },
+          onend: () => {
+            // remove speaking class
+            centerPanel.classList.remove('speaking');
+            // ensure typing finishes if speech ended early
+            if (idx < text.length) {
+              // finish remaining text quickly
+              finishTyping();
             }
-            type();
-        }
-
-        /* ===================== SUBMIT MESSAGE ===================== */
-        submitBtn.addEventListener('click', () => sendMessage());
-        userInput.addEventListener('keyup', (e) => { if (e.key === "Enter") sendMessage(); });
-
-        /* ===================== MICRO (Speech-to-Text) ===================== */
-        micBtn.addEventListener("click", () => {
-            const recognition = new webkitSpeechRecognition();
-            recognition.lang = "fr-FR";
-            recognition.start();
-            recognition.onresult = event => {
-                userInput.value = event.results[0][0].transcript;
-            };
+            if (typeof onDone === 'function') onDone();
+          }
         });
+      } catch (e) {
+        // fallback if TTS fails: just type
+        console.warn('TTS failed:', e);
+      }
 
-        /* ===================== SEND MESSAGE ===================== */
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            // thinking ON
-            thinkingDiv.style.display = "block";
-
-            const aiText = await sendToCosmo(text);
-
-            // thinking OFF
-            thinkingDiv.style.display = "none";
-
-            // create new message block
-            const p = document.createElement("p");
-            p.innerHTML = "<strong>JARVIS:</strong> ";
-            const span = document.createElement("span");
-            p.appendChild(span);
-            responseDiv.appendChild(p);
-
-            // typewriter effect
-            typeWriterEffect(aiText, span);
-
-            // scroll down
-            responseDiv.scrollTop = responseDiv.scrollHeight;
-
-            // speak
-            speak(aiText);
-
-            userInput.value = "";
+      targetSpan.textContent = "";
+      // typing function
+      let typingInterval = setInterval(() => {
+        if (idx < text.length) {
+          targetSpan.textContent += text.charAt(idx);
+          idx++;
+          responseEl.scrollTop = responseEl.scrollHeight;
+        } else {
+          clearInterval(typingInterval);
         }
+      }, speed);
 
-        /* ===================== API COSMOS ===================== */
-        async function sendToCosmo(userText) {
-            const apiURL = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+      // finish immediately when necessary
+      function finishTyping(){
+        clearInterval(typingInterval);
+        targetSpan.textContent = text;
+        responseEl.scrollTop = responseEl.scrollHeight;
+        if (typeof onDone === 'function') onDone();
+      }
 
-            const payload = {
-                model: "cosmosrp",
-                messages: [
-                    { role: "system", content: systemMessage },
-                    { role: "user", content: userText }
-                ]
-            };
-
-            try {
-                const resp = await fetch(apiURL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await resp.json();
-                return data.choices[0].message.content;
-
-            } catch (err) {
-                return "Erreur : Impossible de contacter le serveur JARVIS.";
-            }
+      // safety: also return a cancel function
+      return {
+        cancel: () => {
+          clearInterval(typingInterval);
         }
-    </script>
+      };
+    }
 
+    // Show thinking, query model, then display typing+speech
+    async function processUserMessage(text){
+      addUserMessage(text);
+
+      // show thinking indicator
+      thinkingEl.style.display = 'block';
+
+      // call CosmosRP
+      let aiText;
+      try {
+        aiText = await queryCosmosRP(text);
+        if (!aiText || typeof aiText !== 'string') aiText = "Désolé, je n'ai pas de réponse.";
+      } catch (e) {
+        aiText = "Erreur : impossible de contacter l'assistant.";
+      }
+
+      thinkingEl.style.display = 'none';
+
+      // placeholder and typing+speech
+      const span = addJarvisMessagePlaceholder();
+      // start typing and speech in parallel
+      typeWithSpeech(aiText, span, () => {
+        // done callback - nothing extra for now
+      });
+    }
+
+    // Attach send behavior
+    sendBtn.addEventListener('click', () => {
+      const text = userInputEl.value.trim();
+      if (!text) return;
+      userInputEl.value = '';
+      processUserMessage(text);
+    });
+
+    // Enter key
+    userInputEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        const text = userInputEl.value.trim();
+        if (!text) return;
+        userInputEl.value = '';
+        processUserMessage(text);
+      }
+    });
+
+    // Microphone (Speech to text)
+    let recognition;
+    function initRecognition(){
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn('SpeechRecognition not supported in this browser.');
+        return null;
+      }
+      const rec = new SpeechRecognition();
+      rec.lang = 'fr-FR';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+
+      rec.onstart = () => {
+        micBtn.classList.add('listening');
+      };
+      rec.onend = () => {
+        micBtn.classList.remove('listening');
+      };
+      rec.onerror = (ev) => {
+        console.error('rec error', ev);
+        micBtn.classList.remove('listening');
+      };
+      rec.onresult = (ev) => {
+        const transcript = ev.results[0][0].transcript;
+        // populate input and send
+        userInputEl.value = transcript;
+        processUserMessage(transcript);
+      };
+      return rec;
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (!recognition) recognition = initRecognition();
+      if (!recognition) {
+        alert("Reconnaissance vocale non supportée par votre navigateur.");
+        return;
+      }
+      try {
+        recognition.start();
+      } catch(e){
+        // ignore if already started
+        console.warn(e);
+      }
+    });
+
+    // Query CosmosRP (simple fetch)
+    async function queryCosmosRP(userText){
+      const api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+      const payload = {
+        model: "cosmosrp",
+        messages:[
+          { role: "system", content: systemMessage },
+          { role: "user", content: userText }
+        ]
+      };
+
+      const res = await fetch(api_url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error('API error ' + res.status);
+      }
+
+      const data = await res.json();
+      // safe access
+      const text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) ?
+                    data.choices[0].message.content : null;
+      return text;
+    }
+
+    // Accessibility: announce with ARIA when jarvis speaks (optional)
+    function ariaAnnounce(text){
+      const live = document.createElement('div');
+      live.setAttribute('aria-live','polite');
+      live.style.position='absolute';
+      live.style.left='-9999px';
+      live.textContent = text;
+      document.body.appendChild(live);
+      setTimeout(()=>document.body.removeChild(live),3000);
+    }
+
+    // Optional: warm up responsiveVoice (some browsers require user gesture)
+    function warmUpTTS(){
+      if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
+        // no-op, but can set default voice if needed
+      }
+    }
+    warmUpTTS();
+
+    // Example: welcome message on load
+    window.addEventListener('load', () => {
+      const span = addJarvisMessagePlaceholder();
+      const welcome = "Bonjour, je suis JARVIS. Comment puis-je vous aider aujourd'hui ?";
+      typeWithSpeech(welcome, span);
+    });
+
+  </script>
 </body>
 </html>
+
 
 
 
