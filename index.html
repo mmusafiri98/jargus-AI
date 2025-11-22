@@ -1,47 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPT-2 with TensorFlow.js</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-node"></script> <!-- Se usi Node.js -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS UI - VimeoAI</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #050a11;
+        font-family: "Segoe UI", sans-serif;
+        color: #cfe6ff;
+        overflow: hidden;
+    }
+
+    /* --- LAYOUT --- */
+    .container {
+        display: grid;
+        grid-template-columns: 300px 1fr 380px;
+        height: 100vh;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    /* Sidebar gauche */
+    .sidebar {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid #0d2a42;
+        border-radius: 12px;
+        padding: 15px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);
+    }
+
+    .widget {
+        margin-bottom: 18px;
+        padding: 12px;
+        background: rgba(0, 30, 60, 0.6);
+        border-radius: 10px;
+        border: 1px solid #0d2a42;
+    }
+
+    .widget h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        color: #66baff;
+    }
+
+    /* CENTRE */
+    .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        border-radius: 12px;
+        background: radial-gradient(circle at center, rgba(0,120,255,0.08), rgba(0,0,0,0));
+        border: 1px solid #0d2a42;
+        box-shadow: inset 0 0 40px rgba(0,150,255,0.15);
+    }
+
+    /* JARVIS GIF AU CENTRE */
+    .jarvis-core img {
+        width: 420px;
+        opacity: 0.9;
+        animation: pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.08); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.7; }
+    }
+
+    /* Panel droite */
+    .chat-panel {
+        background: rgba(0, 20, 40, 0.6);
+        border: 1px solid #0d2a42;
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);
+    }
+
+    .chat-panel textarea {
+        flex-grow: 1;
+        background: rgba(0, 30, 60, 0.4);
+        color: #cfe6ff;
+        border: 1px solid #0d2a42;
+        border-radius: 8px;
+        padding: 12px;
+        resize: none;
+        font-size: 14px;
+    }
+
+    .chat-panel button {
+        margin-top: 12px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #0084ff;
+        color: white;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .chat-panel button:hover {
+        background: #0aa0ff;
+        box-shadow: 0 0 10px #0aa0ff;
+    }
+</style>
 </head>
+
 <body>
 
-<h1>Generazione di Testo con GPT-2</h1>
-<textarea id="inputText" placeholder="Inserisci il testo..." rows="5" cols="50"></textarea><br><br>
-<button onclick="generateText()">Genera Testo</button>
+<div class="container">
 
-<div id="output"></div>
+    <!-- SIDEBAR GAUCHE -->
+    <div class="sidebar">
+        <div class="widget">
+            <h3>Informations Système</h3>
+            <p>Status : <span style="color:#44ff99">Actif</span></p>
+            <p>Utilisation CPU : 27%</p>
+            <p>Température : 58°C</p>
+        </div>
 
-<script>
-  let model;
+        <div class="widget">
+            <h3>Météo</h3>
+            <p>Paris: 18°C ☁️</p>
+        </div>
 
-  // Funzione per caricare il modello
-  async function loadModel() {
-    model = await tf.loadLayersModel('URL_DEL_TUO_MODELLO_GPT2');  // Sostituisci con il percorso del tuo modello
-    console.log("Modello GPT-2 caricato!");
-  }
+        <div class="widget">
+            <h3>Dernières Vidéos</h3>
+            <p>Aucune pour le moment.</p>
+        </div>
+    </div>
 
-  // Funzione per generare il testo
-  async function generateText() {
-    const inputText = document.getElementById('inputText').value;
+    <!-- CENTRE JARVIS -->
+    <div class="center">
+        <div class="jarvis-core">
+            <img src="jarvis.gif" alt="JARVIS Core">
+        </div>
+    </div>
 
-    if (model) {
-      const inputTensor = tf.tensor([inputText]);  // Pre-processa il testo in tensor
-      const output = await model.predict(inputTensor);  // Predizione tramite il modello
+    <!-- PANEL DROITE -->
+    <div class="chat-panel">
+        <h3>Instructions</h3>
+        <textarea placeholder="Décris la vidéo que tu veux générer..."></textarea>
+        <button>Générer la vidéo</button>
+    </div>
 
-      // Aggiungi il risultato dell'output al div "output"
-      document.getElementById('output').innerText = output;
-    } else {
-      console.log("Modello non caricato!");
-    }
-  }
-
-  // Carica il modello all'avvio della pagina
-  window.onload = loadModel;
-</script>
+</div>
 
 </body>
 </html>
