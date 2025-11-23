@@ -10,6 +10,7 @@ $jarvisResponse = "";
 if (!empty($userMessage)) {
 
     if ($model === "cosmosrp") {
+
         // -------------------------------
         // API COSMOSRP
         // -------------------------------
@@ -18,8 +19,14 @@ if (!empty($userMessage)) {
         $payload = [
             "model" => "cosmosrp",
             "messages" => [
-                ["role" => "system", "content" => "Tu es JARVIS AI, assistant virtuel masculin, professionnel, poli, créé par Pepe Musafiri. Réponds en français et tout les autres langue aussi."],
-                ["role" => "user", "content" => $userMessage]
+                [
+                    "role" => "system",
+                    "content" => "Tu es JARVIS AI, assistant virtuel masculin, professionnel, poli, créé par Pepe Musafiri. Réponds en français et dans toutes les autres langues aussi."
+                ],
+                [
+                    "role" => "user",
+                    "content" => $userMessage
+                ]
             ]
         ];
 
@@ -36,31 +43,35 @@ if (!empty($userMessage)) {
         $jarvisResponse = $data["choices"][0]["message"]["content"] ?? "Erreur : pas de réponse de CosmosRP";
 
     } else if ($model === "c4ai") {
+
         // -------------------------------
-        // API COHERE C4AI AYA VISION
+        // API COHERE C4AI — AYA EXPANSE 32B
         // -------------------------------
         require_once __DIR__ . "/vendor/autoload.php";
 
         $cohere = new \Cohere\CohereClientV2("Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ");
 
         try {
+
+            // ---- FORMAT CORRECT POUR UN MODELE TEXTE ----
             $response = $cohere->chat([
                 "messages" => [
                     [
                         "role" => "user",
-                        "content" => [
-                            ["type" => "text", "text" => $userMessage]
-                        ]
+                        "content" => $userMessage
                     ]
                 ],
                 "temperature" => 0.3,
-                "model" => "c4ai-aya-vision-32b"
+                "model" => "c4ai-aya-expanse-32b" // <-- CORRECT !
             ]);
 
-            $jarvisResponse = $response["messages"][0]["content"][0]["text"] ?? "Erreur Cohere.";
+            // ---- EXTRACTION CORRIGÉE ----
+            $jarvisResponse = $response["message"]["content"] ?? "Erreur : réponse vide du modèle.";
 
         } catch (Exception $e) {
+
             $jarvisResponse = "Erreur Cohere : " . $e->getMessage();
+
         }
     }
 }
@@ -168,7 +179,7 @@ body{
 
             <select name="model" class="form-control mt-2" style="background:#000;color:var(--accent);">
                 <option value="cosmosrp">CosmosRP</option>
-                <option value="c4ai">C4AI Aya Vision 32B</option>
+                <option value="c4ai">C4AI Aya Expanse 32B</option>
             </select>
 
             <button class="btn btn-info w-100 mt-3">Envoyer</button>
