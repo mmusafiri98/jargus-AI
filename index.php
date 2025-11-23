@@ -1,27 +1,17 @@
 <?php
-// --------------------------------------------------
-//  AFFICHAGE DES ERREURS (évite page blanche !)
-// --------------------------------------------------
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --------------------------------------------------
-//  TRAITEMENT PHP DU CHAT
-// --------------------------------------------------
-
 $model = $_POST['model'] ?? "cosmosrp";
 $userMessage = $_POST['message'] ?? "";
 $jarvisResponse = "";
-$debugInfo = ""; // Pour voir ce qui se passe
+$debugInfo = "";
 
 if (!empty($userMessage)) {
 
     if ($model === "cosmosrp") {
 
-        // -------------------------------
-        // API COSMOSRP
-        // -------------------------------
         $api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
 
         $payload = [
@@ -34,15 +24,12 @@ if (!empty($userMessage)) {
 
         $ch = curl_init($api_url);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json'
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
         $res = curl_exec($ch);
         $curlError = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($curlError) {
@@ -52,12 +39,9 @@ if (!empty($userMessage)) {
             $jarvisResponse = $data["choices"][0]["message"]["content"] ?? "Erreur : pas de réponse de CosmosRP";
         }
 
-    } else if ($model === "c4ai-aya-expanse-32b") {
+    } else if ($model === "c4ai") {
 
-        // -------------------------------
-        // API COHERE c4ai-aya-expanse-32b (CORRIGÉE)
-        // -------------------------------
-        $api_url = "https://api.cohere.com/v2/chat"; // Notez : cohere.COM pas cohere.AI
+        $api_url = "https://api.cohere.com/v2/chat";
 
         $payload = [
             "model" => "c4ai-aya-expanse-32b",
@@ -73,40 +57,32 @@ if (!empty($userMessage)) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Content-Type: application/json",
-            "Authorization: Bearer Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ"" // ⚠️ CHANGEZ CETTE CLÉ !
+            "Authorization: Bearer Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ"
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
         $res = curl_exec($ch);
         $curlError = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($curlError) {
             $jarvisResponse = "Erreur CURL : " . $curlError;
         } else {
             $data = json_decode($res, true);
-            
-            // Debug : afficher la réponse complète
+
             $debugInfo = "<pre style='color:#ff6b6b;font-size:10px;'>" . print_r($data, true) . "</pre>";
 
-            // Essayons plusieurs chemins possibles
             if (isset($data["message"]["content"][0]["text"])) {
                 $jarvisResponse = $data["message"]["content"][0]["text"];
-            } else if (isset($data["text"])) {
-                $jarvisResponse = $data["text"];
-            } else if (isset($data["message"])) {
-                $jarvisResponse = is_string($data["message"]) ? $data["message"] : json_encode($data["message"]);
             } else if (isset($data["error"])) {
-                $jarvisResponse = "⚠️ Erreur API : " . ($data["error"]["message"] ?? json_encode($data["error"]));
+                $jarvisResponse = "Erreur API : " . json_encode($data["error"]);
             } else {
-                $jarvisResponse = "❌ Structure de réponse inconnue (code HTTP: $httpCode)";
+                $jarvisResponse = "Structure inconnue : " . json_encode($data);
             }
         }
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -127,18 +103,37 @@ body{
     background:#020610;
     font-family:"Orbitron";
     color:var(--accent);
-    margin:0;
 }
+
+/* typing effect */
+.typing {
+    border-right: .12em solid #00eaff;
+    white-space: pre-wrap;
+    overflow: hidden;
+}
+
+/* thinking dots animation */
+@keyframes blink {
+  0% {opacity: 0.2;}
+  50% {opacity: 1;}
+  100% {opacity: 0.2;}
+}
+.dots span {
+  animation: blink 1.5s infinite;
+}
+.dots span:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
 .app-grid{
     display:grid;
     grid-template-columns:320px 1fr 320px;
     gap:20px;
     padding:20px;
     min-height:100vh;
-}
-@media(max-width:992px){
-    .app-grid{grid-template-columns:1fr;}
-    .right-panel{display:none;}
 }
 .panel{
     background:var(--panel-bg);
@@ -158,25 +153,17 @@ body{
     border-radius:8px;
 }
 .msg-user{
-    align-self:flex-end;
+    text-align:right;
     background:rgba(0,255,255,0.05);
     padding:10px;
     border-radius:10px;
     margin:8px 0;
 }
 .msg-jarvis{
-    align-self:flex-start;
     background:rgba(255,255,255,0.05);
     padding:10px;
     border-radius:10px;
     margin:8px 0;
-}
-.center-panel{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    border-radius:14px;
-    overflow:hidden;
 }
 </style>
 </head>
@@ -191,9 +178,21 @@ body{
 
         <div id="response">
             <?php if (!empty($userMessage)): ?>
+
                 <div class="msg-user"><?= htmlspecialchars($userMessage) ?></div>
-                <div class="msg-jarvis"><?= $jarvisResponse ?></div>
-                <?= $debugInfo ?> <!-- Affiche les infos de debug -->
+
+                <!-- Thinking Animation -->
+                <div class="msg-jarvis" id="thinking">
+                    JARVIS réfléchit <span class="dots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+
+                <!-- Placeholder for typing effect -->
+                <div class="msg-jarvis">
+                    <span id="typedResponse" class="typing"></span>
+                </div>
+
+                <?= $debugInfo ?>
+
             <?php else: ?>
                 <div class="msg-jarvis">Bonjour, je suis JARVIS. Comment puis-je vous aider ?</div>
             <?php endif; ?>
@@ -203,8 +202,8 @@ body{
             <input type="text" name="message" placeholder="Parle à JARVIS..." class="form-control" required>
 
             <select name="model" class="form-control mt-2" style="background:#000;color:var(--accent);">
-                <option value="cosmosrp" <?= $model === 'cosmosrp' ? 'selected' : '' ?>>CosmosRP</option>
-                <option value="c4ai" <?= $model === 'c4ai' ? 'selected' : '' ?>>C4AI Aya Expanse 32B</option>
+                <option value="cosmosrp">CosmosRP</option>
+                <option value="c4ai">C4AI Aya Expanse 32B</option>
             </select>
 
             <button class="btn btn-info w-100 mt-3">Envoyer</button>
@@ -224,6 +223,34 @@ body{
     </div>
 
 </div>
+
+<script>
+// Typer effect
+const fullText = <?= json_encode($jarvisResponse) ?>;
+let index = 0;
+
+function typeWriter() {
+    const typingDiv = document.getElementById("typedResponse");
+    const thinking = document.getElementById("thinking");
+
+    if (!typingDiv) return;
+
+    setTimeout(() => { thinking.style.display = "none"; }, 300);
+
+    function type() {
+        if (index < fullText.length) {
+            typingDiv.innerHTML += fullText.charAt(index);
+            index++;
+            setTimeout(type, 20);
+        }
+    }
+    type();
+}
+
+<?php if (!empty($userMessage)): ?>
+typeWriter();
+<?php endif; ?>
+</script>
 
 </body>
 </html>
