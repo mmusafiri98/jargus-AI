@@ -52,7 +52,7 @@ if (!empty($userMessage)) {
             $jarvisResponse = $data["choices"][0]["message"]["content"] ?? "Erreur : pas de réponse de CosmosRP";
         }
 
-    } else if ($model === "c4ai") {
+    } else if ($model === "c4ai-aya-expanse-32b") {
 
         // -------------------------------
         // API COHERE c4ai-aya-expanse-32b (CORRIGÉE)
@@ -73,7 +73,7 @@ if (!empty($userMessage)) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Content-Type: application/json",
-            "Authorization: Bearer VOTRE_CLE_API_ICI" // ⚠️ CHANGEZ CETTE CLÉ !
+            "Authorization: Bearer Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ"" // ⚠️ CHANGEZ CETTE CLÉ !
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
@@ -227,5 +227,6 @@ body{
 
 </body>
 </html>
+
 
 
