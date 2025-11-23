@@ -21,7 +21,7 @@ if (!empty($userMessage)) {
             "messages" => [
                 [
                     "role" => "system",
-                    "content" => "Tu es JARVIS AI, assistant virtuel masculin, professionnel, poli, créé par Pepe Musafiri. Réponds en français et dans toutes les autres langues aussi."
+                    "content" => "Tu es JARVIS AI, assistant professionnel, masculin, poli, créé par Pepe Musafiri. Réponds en français ou dans toute autre langue."
                 ],
                 [
                     "role" => "user",
@@ -45,33 +45,40 @@ if (!empty($userMessage)) {
     } else if ($model === "c4ai") {
 
         // -------------------------------
-        // API COHERE C4AI — AYA EXPANSE 32B
+        // API COHERE — AYA EXPANSE 32B — VERSION SANS COMPOSER
         // -------------------------------
-        require_once __DIR__ . "/vendor/autoload.php";
+        $api_url = "https://api.cohere.ai/v2/chat";
+        $api_key = "Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ";
 
-        $cohere = new \Cohere\CohereClientV2("Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ");
+        $payload = [
+            "model" => "c4ai-aya-expanse-32b",
+            "messages" => [
+                [
+                    "role" => "user",
+                    "content" => $userMessage
+                ]
+            ],
+            "temperature" => 0.3
+        ];
 
-        try {
+        $ch = curl_init($api_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "Authorization: Bearer " . $api_key
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
-            // ---- FORMAT CORRECT POUR UN MODELE TEXTE ----
-            $response = $cohere->chat([
-                "messages" => [
-                    [
-                        "role" => "user",
-                        "content" => $userMessage
-                    ]
-                ],
-                "temperature" => 0.3,
-                "model" => "c4ai-aya-expanse-32b" // <-- CORRECT !
-            ]);
+        $res = curl_exec($ch);
+        curl_close($ch);
 
-            // ---- EXTRACTION CORRIGÉE ----
-            $jarvisResponse = $response["message"]["content"] ?? "Erreur : réponse vide du modèle.";
+        $data = json_decode($res, true);
 
-        } catch (Exception $e) {
-
-            $jarvisResponse = "Erreur Cohere : " . $e->getMessage();
-
+        if (isset($data["message"]["content"])) {
+            $jarvisResponse = $data["message"]["content"];
+        } else {
+            $jarvisResponse = "Erreur Cohere : " . json_encode($data);
         }
     }
 }
@@ -186,7 +193,7 @@ body{
         </form>
     </div>
 
-    <!-- CENTER -->
+    <!-- CENTER PANEL -->
     <div class="panel center-panel">
         <img id="jarvis-gif" src="jarvis.gif" alt="JARVIS">
     </div>
