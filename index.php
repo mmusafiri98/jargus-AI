@@ -13,6 +13,7 @@ error_reporting(E_ALL);
 $model = $_POST['model'] ?? "cosmosrp";
 $userMessage = $_POST['message'] ?? "";
 $jarvisResponse = "";
+$debugInfo = ""; // Pour voir ce qui se passe
 
 if (!empty($userMessage)) {
 
@@ -41,6 +42,7 @@ if (!empty($userMessage)) {
 
         $res = curl_exec($ch);
         $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($curlError) {
@@ -55,9 +57,8 @@ if (!empty($userMessage)) {
         // -------------------------------
         // API COHERE c4ai-aya-expanse-32b (CORRIGÉE)
         // -------------------------------
-        $api_url = "https://api.cohere.ai/v2/chat";
+        $api_url = "https://api.cohere.com/v2/chat"; // Notez : cohere.COM pas cohere.AI
 
-        // IMPORTANT : Cohere N'ACCEPTE PAS les messages assistant dans l’historique
         $payload = [
             "model" => "c4ai-aya-expanse-32b",
             "messages" => [
@@ -65,33 +66,42 @@ if (!empty($userMessage)) {
                     "role" => "user",
                     "content" => $userMessage
                 ]
-            ],
-            "temperature" => 0.3
+            ]
         ];
 
         $ch = curl_init($api_url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Content-Type: application/json",
-            "Authorization: Bearer Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ"
+            "Authorization: Bearer VOTRE_CLE_API_ICI" // ⚠️ CHANGEZ CETTE CLÉ !
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
         $res = curl_exec($ch);
         $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($curlError) {
             $jarvisResponse = "Erreur CURL : " . $curlError;
         } else {
             $data = json_decode($res, true);
+            
+            // Debug : afficher la réponse complète
+            $debugInfo = "<pre style='color:#ff6b6b;font-size:10px;'>" . print_r($data, true) . "</pre>";
 
-            // Vérif Debug
+            // Essayons plusieurs chemins possibles
             if (isset($data["message"]["content"][0]["text"])) {
                 $jarvisResponse = $data["message"]["content"][0]["text"];
+            } else if (isset($data["text"])) {
+                $jarvisResponse = $data["text"];
+            } else if (isset($data["message"])) {
+                $jarvisResponse = is_string($data["message"]) ? $data["message"] : json_encode($data["message"]);
+            } else if (isset($data["error"])) {
+                $jarvisResponse = "⚠️ Erreur API : " . ($data["error"]["message"] ?? json_encode($data["error"]));
             } else {
-                $jarvisResponse = "Réponse inattendue de Cohere :<br><pre>" . print_r($data, true) . "</pre>";
+                $jarvisResponse = "❌ Structure de réponse inconnue (code HTTP: $httpCode)";
             }
         }
     }
@@ -183,6 +193,7 @@ body{
             <?php if (!empty($userMessage)): ?>
                 <div class="msg-user"><?= htmlspecialchars($userMessage) ?></div>
                 <div class="msg-jarvis"><?= $jarvisResponse ?></div>
+                <?= $debugInfo ?> <!-- Affiche les infos de debug -->
             <?php else: ?>
                 <div class="msg-jarvis">Bonjour, je suis JARVIS. Comment puis-je vous aider ?</div>
             <?php endif; ?>
@@ -192,8 +203,8 @@ body{
             <input type="text" name="message" placeholder="Parle à JARVIS..." class="form-control" required>
 
             <select name="model" class="form-control mt-2" style="background:#000;color:var(--accent);">
-                <option value="cosmosrp">CosmosRP</option>
-                <option value="c4ai">C4AI Aya Expanse 32B</option>
+                <option value="cosmosrp" <?= $model === 'cosmosrp' ? 'selected' : '' ?>>CosmosRP</option>
+                <option value="c4ai" <?= $model === 'c4ai' ? 'selected' : '' ?>>C4AI Aya Expanse 32B</option>
             </select>
 
             <button class="btn btn-info w-100 mt-3">Envoyer</button>
