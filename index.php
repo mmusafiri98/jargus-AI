@@ -1,214 +1,104 @@
 <?php
-// -------------------------------
-//  TRAITEMENT PHP DU CHAT
-// -------------------------------
+// -------------------------
+// DEBUG PHP — AFFICHE TOUT
+// -------------------------
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$model = $_POST['model'] ?? "cosmosrp";
-$userMessage = $_POST['message'] ?? "";
-$jarvisResponse = "";
+echo "<h2>Debug du modèle c4ai-aya-expanse-32b</h2>";
 
-if (!empty($userMessage)) {
+// -------------------------
+// CONTENU À ENVOYER AU MODÈLE
+// -------------------------
+$userMessage = "Bonjour, test du modèle aya expanse.";
 
-    if ($model === "cosmosrp") {
+// -------------------------
+// CONFIG API COHERE
+// -------------------------
+$api_url = "https://api.cohere.ai/v2/chat";
+$api_key = "Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ";
 
-        // -------------------------------
-        // API COSMOSRP
-        // -------------------------------
-        $api_url = "https://api.pawan.krd/cosmosrp/v1/chat/completions";
+// -------------------------
+// PAYLOAD POUR COHERE
+// -------------------------
+$payload = [
+    "model" => "c4ai-aya-expanse-32b",
+    "messages" => [
+        [
+            "role" => "user",
+            "content" => $userMessage
+        ]
+    ],
+    "temperature" => 0.3
+];
 
-        $payload = [
-            "model" => "cosmosrp",
-            "messages" => [
-                [
-                    "role" => "system",
-                    "content" => "Tu es JARVIS AI, assistant professionnel, masculin, poli, créé par Pepe Musafiri. Réponds en français ou dans toute autre langue."
-                ],
-                [
-                    "role" => "user",
-                    "content" => $userMessage
-                ]
-            ]
-        ];
+// AFFICHAGE DU JSON ENVOYÉ
+echo "<h3>Payload envoyé :</h3>";
+echo "<pre>" . json_encode($payload, JSON_PRETTY_PRINT) . "</pre>";
 
-        $ch = curl_init($api_url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+// -------------------------
+// REQUÊTE CURL
+// -------------------------
+$ch = curl_init($api_url);
 
-        $res = curl_exec($ch);
-        curl_close($ch);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Content-Type: application/json",
+    "Authorization: Bearer " . $api_key
+]);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Evite certains bugs SSL
 
-        $data = json_decode($res, true);
-        $jarvisResponse = $data["choices"][0]["message"]["content"] ?? "Erreur : pas de réponse de CosmosRP";
+$response = curl_exec($ch);
+$curl_error = curl_error($ch);
+$curl_info = curl_getinfo($ch);
 
-    } else if ($model === "c4ai") {
+curl_close($ch);
 
-        // -------------------------------
-        // API COHERE — AYA EXPANSE 32B — VERSION SANS COMPOSER
-        // -------------------------------
-        $api_url = "https://api.cohere.ai/v2/chat";
-        $api_key = "Uw540GN865rNyiOs3VMnWhRaYQ97KAfudAHAnXzJ";
+// -------------------------
+// DEBUG CURL
+// -------------------------
+echo "<h3>Infos CURL :</h3>";
+echo "<pre>" . print_r($curl_info, true) . "</pre>";
 
-        $payload = [
-            "model" => "c4ai-aya-expanse-32b",
-            "messages" => [
-                [
-                    "role" => "user",
-                    "content" => $userMessage
-                ]
-            ],
-            "temperature" => 0.3
-        ];
+if ($curl_error) {
+    echo "<h3>Erreur CURL :</h3>";
+    echo "<pre>$curl_error</pre>";
+}
 
-        $ch = curl_init($api_url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Content-Type: application/json",
-            "Authorization: Bearer " . $api_key
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+// -------------------------
+// AFFICHAGE DE LA RÉPONSE BRUTE
+// -------------------------
+echo "<h3>Réponse brute API :</h3>";
+echo "<pre>$response</pre>";
 
-        $res = curl_exec($ch);
-        curl_close($ch);
+// -------------------------
+// DÉCODE LA RÉPONSE JSON
+// -------------------------
+$data = json_decode($response, true);
 
-        $data = json_decode($res, true);
+// -------------------------
+// DEBUG DU JSON DÉCODÉ
+// -------------------------
+echo "<h3>Réponse JSON décodée :</h3>";
+echo "<pre>" . print_r($data, true) . "</pre>";
 
-        if (isset($data["message"]["content"])) {
-            $jarvisResponse = $data["message"]["content"];
-        } else {
-            $jarvisResponse = "Erreur Cohere : " . json_encode($data);
-        }
-    }
+// -------------------------
+// EXTRACTION DU MESSAGE
+// -------------------------
+echo "<h3>Message du modèle :</h3>";
+
+if (isset($data["message"]["content"])) {
+    echo "<div style='padding:10px;border:1px solid #333;background:#f5f5f5;'>";
+    echo $data["message"]["content"];
+    echo "</div>";
+} else {
+    echo "<p>⚠️ Le modèle n'a pas renvoyé de contenu.</p>";
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JARVIS AI — Interface</title>
 
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Font -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-
-<style>
-:root{
-    --accent:#00eaff;
-    --panel-bg:rgba(0,255,255,0.06);
-}
-body{
-    background:#020610;
-    font-family:"Orbitron";
-    color:var(--accent);
-    margin:0;
-}
-.app-grid{
-    display:grid;
-    grid-template-columns:320px 1fr 320px;
-    gap:20px;
-    padding:20px;
-    min-height:100vh;
-}
-@media(max-width:992px){
-    .app-grid{grid-template-columns:1fr;}
-    .right-panel{display:none;}
-}
-.panel{
-    background:var(--panel-bg);
-    border:1px solid rgba(0,255,255,0.1);
-    border-radius:14px;
-    padding:14px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-#response{
-    height:60vh;
-    overflow:auto;
-    color:#dff9ff;
-    padding:12px;
-    background:rgba(0,10,16,0.25);
-    border-radius:8px;
-}
-.msg-user{
-    align-self:flex-end;
-    background:rgba(0,255,255,0.05);
-    padding:10px;
-    border-radius:10px;
-    margin:8px 0;
-}
-.msg-jarvis{
-    align-self:flex-start;
-    background:rgba(255,255,255,0.05);
-    padding:10px;
-    border-radius:10px;
-    margin:8px 0;
-}
-.center-panel{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    border-radius:14px;
-    overflow:hidden;
-}
-#jarvis-gif{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app-grid">
-
-    <!-- LEFT PANEL -->
-    <div class="panel left-panel">
-        <h3 style="text-align:center;">JARVIS AI</h3>
-
-        <div id="response">
-            <?php if (!empty($userMessage)): ?>
-                <div class="msg-user"><?= htmlspecialchars($userMessage) ?></div>
-                <div class="msg-jarvis"><?= nl2br(htmlspecialchars($jarvisResponse)) ?></div>
-            <?php else: ?>
-                <div class="msg-jarvis">Bonjour, je suis JARVIS. Comment puis-je vous aider ?</div>
-            <?php endif; ?>
-        </div>
-
-        <form method="POST">
-            <input type="text" name="message" placeholder="Parle à JARVIS..." class="form-control" required>
-
-            <select name="model" class="form-control mt-2" style="background:#000;color:var(--accent);">
-                <option value="cosmosrp">CosmosRP</option>
-                <option value="c4ai">C4AI Aya Expanse 32B</option>
-            </select>
-
-            <button class="btn btn-info w-100 mt-3">Envoyer</button>
-        </form>
-    </div>
-
-    <!-- CENTER PANEL -->
-    <div class="panel center-panel">
-        <img id="jarvis-gif" src="jarvis.gif" alt="JARVIS">
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="panel right-panel">
-        <h4 style="text-align:center;">Système</h4>
-        <p>Statut : <b style="color:#8bffcf">En ligne</b></p>
-        <p>Modèle sélectionné : <b><?= htmlspecialchars($model) ?></b></p>
-    </div>
-
-</div>
-
-</body>
-</html>
 
 
 
